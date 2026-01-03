@@ -1,0 +1,54 @@
+CREATE DATABASE IF NOT EXISTS tugestionamiga_db;
+USE tugestionamiga_db;
+
+CREATE TABLE rol (
+  id_rol INT AUTO_INCREMENT PRIMARY KEY,
+  nombre_rol VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE usuario (
+  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  correo VARCHAR(100) NOT NULL UNIQUE,
+  contraseña VARCHAR(255) NOT NULL,
+  id_rol INT,
+  FOREIGN KEY (id_rol) REFERENCES rol(id_rol)
+);
+
+CREATE TABLE categoria (
+  id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+  nombre_categoria VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE libro (
+  id_libro INT AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(150) NOT NULL,
+  autor VARCHAR(100) NOT NULL,
+  descripcion TEXT,
+  disponibilidad BOOLEAN NOT NULL,
+  id_categoria INT,
+  FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+);
+
+CREATE TABLE prestamo (
+  id_prestamo INT AUTO_INCREMENT PRIMARY KEY,
+  fecha_prestamo DATE NOT NULL,
+  fecha_devolucion DATE NOT NULL,
+  estado VARCHAR(50) NOT NULL,
+  id_usuario INT,
+  id_libro INT,
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (id_libro) REFERENCES libro(id_libro)
+);
+
+CREATE TABLE compra (
+  id_compra INT AUTO_INCREMENT PRIMARY KEY,
+  fecha_compra DATE NOT NULL,
+  precio DECIMAL(10,2) NOT NULL,
+  id_usuario INT,
+  id_libro INT,
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+  FOREIGN KEY (id_libro) REFERENCES libro(id_libro)
+);
+
+

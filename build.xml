@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Puedes editar libremente este archivo. Mira los bloques comentados de abajo para -->
+<!-- ver ejemplos de cómo personalizar la construcción. -->
+<!-- (Si lo borras y reabres el proyecto, se volverá a crear.) -->
+<!-- Por defecto, solo los comandos Clean y Compilar usan este script de construcción. -->
+<!-- Comandos como Ejecutar, Depurar y Probar solo usan este script si -->
+<!-- la opción Compilar al guardar está desactivada para el proyecto. -->
+<!-- Puedes desactivar Compilar al guardar (o Desplegar al guardar) en -->
+<!-- el cuadro de diálogo Propiedades del proyecto.--> 
+<project name="TuGestionAmiga" default="default" basedir=".">
+    <description>Construye, prueba y ejecuta el proyecto TuGestionAmiga.</description>
+    <import file="nbproject/build-impl.xml"/>
+    <!--
+
+    Existen varios targets que por defecto están vacíos y que pueden
+    usarse para ejecutar tareas personalizadas. Estos targets normalmente se ejecutan
+    antes y después de algunos targets principales. Son:
+
+      -pre-init:                 llamado antes de inicializar las propiedades del proyecto
+      -post-init:                llamado después de inicializar las propiedades del proyecto
+      -pre-compile:              llamado antes de la compilación con javac
+      -post-compile:             llamado después de la compilación con javac
+      -pre-compile-single:       llamado antes de compilar un solo archivo con javac
+      -post-compile-single:      llamado después de compilar un solo archivo con javac
+      -pre-compile-test:         llamado antes de compilar pruebas JUnit con javac
+      -post-compile-test:        llamado después de compilar pruebas JUnit con javac
+      -pre-compile-test-single:  llamado antes de compilar una sola prueba JUnit
+      -post-compile-test-single: llamado después de compilar una sola prueba JUnit
+      -pre-jar:                  llamado antes de construir el JAR
+      -post-jar:                 llamado después de construir el JAR
+      -post-clean:               llamado después de limpiar los artefactos de construcción
+
+    (Los targets que empiezan con '-' no están pensados para ejecutarse de forma directa.)
+
+    Ejemplo de cómo insertar un ofuscador después de la compilación:
+
+        <target name="-post-compile">
+            <obfuscate>
+                <fileset dir="${build.classes.dir}"/>
+            </obfuscate>
+        </target>
+
+    Para ver la lista de propiedades disponibles, revisa el archivo importado:
+    nbproject/build-impl.xml
+
+
+    Otra forma de personalizar la construcción es sobrescribiendo targets principales existentes.
+    Los targets de interés son:
+
+      -init-macrodef-javac:     define la macro para compilación con javac
+      -init-macrodef-junit:     define la macro para ejecución de junit
+      -init-macrodef-debug:     define la macro para depuración de clases
+      -init-macrodef-java:      define la macro para ejecución de clases
+      -do-jar:                  construcción del JAR
+      run:                      ejecución del proyecto
+      -javadoc-build:           generación de Javadoc
+      test-report:              generación del reporte de JUnit
+
+    Ejemplo de cómo sobrescribir el target para ejecución del proyecto:
+
+        <target name="run" depends="TuGestionAmiga-impl.jar">
+            <exec dir="bin" executable="launcher.exe">
+                <arg file="${dist.jar}"/>
+            </exec>
+        </target>
+
+    Ten en cuenta que el target sobrescrito depende del target del jar y no solamente
+    del target de compilación, como lo hace el run regular. De nuevo, para ver la lista
+    de propiedades disponibles que puedes usar, revisa el target que estás sobrescribiendo
+    en el archivo nbproject/build-impl.xml
+
+    -->
+</project>

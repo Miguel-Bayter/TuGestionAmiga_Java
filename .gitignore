@@ -1,0 +1,60 @@
+# =====================
+# Java (compilación)
+# =====================
+*.class
+*.log
+
+# Archivos empaquetados
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# =====================
+# NetBeans (Ant)
+# =====================
+/build/
+/dist/
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# Archivos generados por NetBeans
+/nbproject/genfiles.properties
+
+# =====================
+# Configuración local / credenciales
+# =====================
+# Contiene usuario/clave de BD (no versionar)
+/db.properties
+
+# =====================
+# Sistema operativo / IDE
+# =====================
+# Windows
+Thumbs.db
+Desktop.ini
+
+# VS Code (por si se usa)
+.vscode/
+
+# IntelliJ (por si se abre ahí)
+.idea/
+*.iml
+
+# Eclipse (por si se abre ahí)
+.project
+.classpath
+.settings/
+
+# MacOS
+.DS_Store
+
+# =====================
+# Git
+# =====================
+# Evitar commits de merges temporales
+*.orig
