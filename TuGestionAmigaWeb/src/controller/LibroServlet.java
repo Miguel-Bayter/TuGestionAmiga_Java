@@ -1,6 +1,5 @@
 package controller;
 
-import dao.LibroDAO;
 import java.io.IOException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -8,6 +7,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import model.Libro;
+import model.Usuario;
+import service.LibroService;
 
 /**
  * Servlet para administrar libros (CRUD).
@@ -16,6 +17,15 @@ import model.Libro;
  * Se decidió manejar las acciones con el parámetro {@code accion} para no crear muchos servlets.
  * La JSP usada es {@code /jsp/listarLibros.jsp}.
  * </p>
+ *
+ * <p>
+ * Permisos:
+ * </p>
+ *
+ * <ul>
+ *   <li><strong>ADMIN</strong>: puede crear, editar, actualizar y eliminar.</li>
+ *   <li><strong>USUARIO</strong>: solo puede listar (lectura).</li>
+ * </ul>
  *
  * <ul>
  *   <li>GET /libros?accion=listar</li>
@@ -29,21 +39,33 @@ public class LibroServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        Usuario usuarioSesion = null;
+        if (request.getSession(false) != null) {
+            usuarioSesion = (Usuario) request.getSession(false).getAttribute("usuarioLogueado");
+        }
+
         String accion = request.getParameter("accion");
         if (accion == null || accion.trim().isEmpty()) {
             accion = "listar";
         }
 
         try {
-            LibroDAO dao = new LibroDAO(getServletContext());
+            LibroService libroService = new LibroService(getServletContext());
 
             if ("editar".equalsIgnoreCase(accion)) {
+                // Solo un administrador puede entrar a modo edición.
+                // Para el usuario normal se deja el listado como lectura.
+                if (usuarioSesion == null || !usuarioSesion.esAdministrador()) {
+                    request.getSession().setAttribute("error", "Acceso restringido: solo un administrador puede editar libros.");
+                    response.sendRedirect(request.getContextPath() + "/libros?accion=listar");
+                    return;
+                }
                 int id = Integer.parseInt(request.getParameter("id"));
-                Libro libroEdit = dao.findById(id);
+                Libro libroEdit = libroService.obtenerPorId(id);
                 request.setAttribute("libroEdit", libroEdit);
             }
 
-            List<Libro> libros = dao.findAll();
+            List<Libro> libros = libroService.listarLibros();
             request.setAttribute("libros", libros);
 
             request.getRequestDispatcher("/jsp/listarLibros.jsp").forward(request, response);
@@ -58,27 +80,38 @@ public class LibroServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        Usuario usuarioSesion = null;
+        if (request.getSession(false) != null) {
+            usuarioSesion = (Usuario) request.getSession(false).getAttribute("usuarioLogueado");
+        }
+        if (usuarioSesion == null || !usuarioSesion.esAdministrador()) {
+            // El CRUD de libros queda reservado para administrador.
+            request.getSession().setAttribute("error", "Acceso restringido: solo un administrador puede modificar libros.");
+            response.sendRedirect(request.getContextPath() + "/libros?accion=listar");
+            return;
+        }
+
         String accion = request.getParameter("accion");
         if (accion == null || accion.trim().isEmpty()) {
             accion = "crear";
         }
 
         try {
-            LibroDAO dao = new LibroDAO(getServletContext());
+            LibroService libroService = new LibroService(getServletContext());
 
             if ("crear".equalsIgnoreCase(accion)) {
                 Libro l = buildLibroFromRequest(request, false);
-                int id = dao.create(l);
+                int id = libroService.crearLibro(l);
                 request.getSession().setAttribute("mensaje", (id > 0) ? "Libro creado con ID: " + id : "No se pudo crear el libro.");
 
             } else if ("actualizar".equalsIgnoreCase(accion)) {
                 Libro l = buildLibroFromRequest(request, true);
-                boolean ok = dao.update(l);
+                boolean ok = libroService.actualizarLibro(l);
                 request.getSession().setAttribute("mensaje", ok ? "Libro actualizado." : "No se pudo actualizar el libro.");
 
             } else if ("eliminar".equalsIgnoreCase(accion)) {
                 int id = Integer.parseInt(request.getParameter("id"));
-                boolean ok = dao.delete(id);
+                boolean ok = libroService.eliminarLibro(id);
                 request.getSession().setAttribute("mensaje", ok ? "Libro eliminado." : "No se pudo eliminar el libro.");
             }
 

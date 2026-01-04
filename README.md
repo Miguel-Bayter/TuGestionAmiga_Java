@@ -256,46 +256,26 @@ SELECT * FROM prestamo;
 - **La tabla no existe**
   - Asegúrate de haber ejecutado el script SQL y que `db.url` apunte a `tugestionamiga_db`.
 
-## Notas
-
-- En MySQL la columna de contraseña se llama `contraseña` (incluye `ñ`). En el código se usa backtick y/o alias SQL para evitar inconvenientes al mapear resultados.
-- Si intentas prestar un libro no disponible, la operación se rechaza.
+ ## Notas
+ 
+ - En MySQL la columna de contraseña se llama `contraseña` (incluye `ñ`). En el código se usa backtick y/o alias SQL para evitar inconvenientes al mapear resultados.
+ - Si intentas prestar un libro no disponible, la operación se rechaza.
+ 
 
 # Parte 2 - Módulo Web (Servlets + JSP) - `TuGestionAmigaWeb`
 
 Además del módulo de consola, el repositorio incluye un módulo web dentro de la carpeta `TuGestionAmigaWeb/` pensado para ejecutarse con **Tomcat 9**.
 
-### Qué se hizo y por qué
+## Requisitos
 
-La idea fue reutilizar la lógica ya implementada (modelos + DAOs) y adaptarla a un entorno web con arquitectura **MVC**:
+- Java JDK 17+ (o compatible con tu NetBeans)
+- Apache Tomcat 9
+- MySQL 8+
+- Controlador JDBC: **mysql-connector-j** agregado al proyecto web
 
-- **Modelo:** clases Java que representan los datos (`Usuario`, `Libro`, `Prestamo`, `Rol`).
-- **Controlador:** Servlets que reciben peticiones HTTP, validan datos, llaman DAOs y luego redirigen o reenvían a JSP.
-- **Vista:** JSP que muestran la información y contienen formularios HTML para enviar datos a los Servlets.
+## Configuración de base de datos (módulo web)
 
-### Estructura del módulo web
-
-Carpetas principales:
-
-- `TuGestionAmigaWeb/src/`
-  - `controller/` (Servlets)
-  - `dao/` (acceso a datos)
-  - `model/` (POJOs)
-  - `util/` (conexión JDBC para web)
-  - `filter/` y `listener/` (seguridad básica y carga de configuración)
-
-- `TuGestionAmigaWeb/web/`
-  - `index.jsp`
-  - `jsp/` (vistas)
-  - `css/` (estilos)
-  - `js/` (scripts)
-  - `WEB-INF/web.xml` (configuración y mapeos)
-
-### Configuración de base de datos (módulo web)
-
-En el módulo web, la conexión NO se lee desde la raíz del proyecto como en consola.
-
-Aquí se lee desde:
+En el módulo web la configuración se lee desde:
 
 - `TuGestionAmigaWeb/web/WEB-INF/db.properties`
 
@@ -319,121 +299,9 @@ db.password=123456
 
 **Nota:** `db.properties` está ignorado por `.gitignore` para no subir credenciales.
 
-### Cómo funciona la conexión en web
+## Cómo ejecutar el módulo web en NetBeans con Tomcat 9
 
-- `util.ConexionBD` lee `WEB-INF/db.properties` usando `ServletContext.getResourceAsStream(...)`.
-- `listener.AppContextListener` carga las propiedades al iniciar la aplicación y las guarda en el `ServletContext`.
-- Cada DAO recibe el `ServletContext` para abrir conexiones con `ConexionBD.getConnection(context)`.
-
-### Seguridad básica (sesión)
-
-- `LoginServlet` valida el usuario (correo/contraseña) y guarda el objeto en sesión como `usuarioLogueado`.
-- `filter.AuthFilter` bloquea el acceso a las páginas internas si no existe sesión.
-- `LogoutServlet` invalida la sesión.
-
-### Rutas principales
-
-Estas rutas están definidas en `web.xml`:
-
-- `GET/POST /login`
-- `GET/POST /register`
-- `GET /logout`
-- `GET /dashboard`
-- `GET/POST /usuarios`
-- `GET/POST /libros`
-- `GET/POST /prestamos`
-
-### Cambios de esta fase (módulo web)
-
-En esta fase se agregaron/mejoraron estas partes:
-
-- **Registro de usuario (pantalla pública)**
-  - Ruta nueva: `/register`.
-  - `controller.RegisterServlet` + `jsp/register.jsp`.
-  - Validaciones simples: campos obligatorios, contraseñas coinciden, correo único.
-  - Al registrarse correctamente, se muestra un mensaje en `/login`.
-
-- **Mejoras visuales (CSS)**
-  - Se mejoró el estilo general en `web/css/styles.css`.
-  - Login y registro se ajustaron para verse centrados y con diseño tipo “tarjeta”.
-
-- **Controlador JDBC (para evitar "No suitable driver")**
-  - Se asegura que el conector `mysql-connector-j` esté disponible en el despliegue.
-  - En `util.ConexionBD` se fuerza la carga del driver para que sea más fácil detectar si falta el `.jar`.
-
-### Explicación detallada del flujo y clases principales
-
-#### 1) `web.xml` (configuración web)
-
-En `TuGestionAmigaWeb/web/WEB-INF/web.xml` se definen:
-
-- Los **mapeos** de cada Servlet (por ejemplo, `/login`, `/usuarios`, etc.).
-- El **filtro** `AuthFilter` para controlar acceso por sesión.
-- El **listener** `AppContextListener` para cargar configuración al iniciar.
-
-#### 2) Inicio de sesión
-
-- `controller.LoginServlet`
-  - **GET:** muestra `jsp/login.jsp`.
-  - **POST:** lee `correo` y `contrasena`, consulta en BD con `dao.UsuarioDAO.findByCorreoYContrasena(...)`.
-  - Si el usuario existe, guarda en sesión `usuarioLogueado` y redirige a `/dashboard`.
-
-- `controller.LogoutServlet`
-  - Invalida la sesión y redirige a `/login`.
-
-#### 3) Protección de páginas (sesión)
-
-- `filter.AuthFilter`
-  - Permite acceder sin sesión a:
-    - `/login`
-    - `/register`
-    - `index.jsp`
-    - recursos estáticos (`/css/`, `/js/`)
-  - Para cualquier otra ruta, exige que exista `usuarioLogueado` en sesión.
-
-#### 4) Dashboard
-
-- `controller.DashboardServlet`
-  - Reenvía a `jsp/dashboard.jsp`.
-  - La JSP lee `usuarioLogueado` desde sesión para mostrar el nombre/correo.
-
-#### 5) CRUD de usuarios
-
-- `controller.UsuarioServlet`
-  - Usa el parámetro `accion` para decidir qué hacer:
-    - **GET listar:** carga lista y muestra `jsp/usuarios.jsp`.
-    - **GET editar:** carga un usuario por id y lo pone en `usuarioEdit` para rellenar el formulario.
-    - **POST crear/actualizar/eliminar:** ejecuta el DAO y luego redirige a listar.
-  - Maneja mensajes simples con `session.setAttribute("mensaje"/"error")`.
-
-- `jsp/usuarios.jsp`
-  - Contiene:
-    - Formulario de registro/edición.
-    - Tabla con el listado.
-    - Botón para eliminar con confirmación.
-
-#### 6) CRUD de libros
-
-- `controller.LibroServlet`
-  - Misma idea que usuarios (`accion=listar|editar|crear|actualizar|eliminar`).
-  - Reenvía a `jsp/listarLibros.jsp`.
-
-#### 7) Préstamos y devoluciones
-
-- `controller.PrestamoServlet`
-  - **GET:** carga usuarios, libros y préstamos para armar los combos/listado en `jsp/prestamos.jsp`.
-  - **POST registrarPrestamo:** llama `dao.PrestamoDAO.registrarPrestamo(...)`.
-  - **POST registrarDevolucion:** llama `dao.PrestamoDAO.registrarDevolucion(...)`.
-  - **POST eliminar:** elimina el préstamo por id.
-
-En `dao.PrestamoDAO`:
-
-- `registrarPrestamo(...)` usa transacción y `FOR UPDATE` para evitar inconsistencias.
-- `registrarDevolucion(...)` cambia el estado a `DEVUELTO` y vuelve a poner el libro disponible.
-
-### Cómo ejecutar el módulo web en NetBeans con Tomcat 9
-
-Este repositorio actualmente tiene un proyecto NetBeans de tipo **Java SE** (módulo consola). Para el módulo web, lo recomendado es crear un proyecto web adicional (en NetBeans) apuntando a la carpeta `TuGestionAmigaWeb/`.
+Este repositorio tiene un proyecto NetBeans de tipo **Java SE** (módulo consola). Para el módulo web, lo recomendado es crear un proyecto web adicional en NetBeans apuntando a la carpeta `TuGestionAmigaWeb/`.
 
 Pasos:
 
@@ -468,30 +336,30 @@ Pasos:
 7) Ejecuta:
    - Click derecho al proyecto web > **Ejecutar**.
 
-### Cómo probar esta fase del módulo web (paso a paso)
+## Cómo probar el módulo web (paso a paso)
 
-#### Prueba 0: ver que carga el login
+### Prueba 0: ver que carga el login
 
 1) Abre la aplicación web.
 2) Debe mostrar el login en `/login`.
 
-#### Prueba 1: registrarse (nuevo)
+### Prueba 1: registrarse
 
 1) En el login, entra al enlace **“Regístrate aquí”**.
 2) Completa el formulario y crea tu cuenta.
 3) Debe redirigir a `/login` y mostrar el mensaje de registro exitoso.
 
-#### Prueba 2: iniciar sesión
+### Prueba 2: iniciar sesión
 
 1) Inicia sesión con el correo/contraseña que registraste.
 2) Debe entrar al `/dashboard`.
 
-#### Prueba 3: CRUD web (validación completa)
+### Prueba 3: CRUD web
 
 1) **Usuarios**
    - Crear usuario.
    - Editar usuario.
-   - Eliminar usuario.
+   - Eliminar usuario (no se permite eliminar el mismo usuario que tiene la sesión iniciada).
 
 2) **Libros**
    - Crear libro disponible.
@@ -502,11 +370,45 @@ Pasos:
    - Registrar un préstamo (debe cambiar la disponibilidad del libro).
    - Registrar la devolución (debe volver a disponible).
 
-### Nota sobre errores de importación `javax.servlet`
+## Roles y permisos (ADMIN / USUARIO)
+
+En el módulo web se separaron permisos para que la aplicación muestre y permita acciones distintas según el rol del usuario.
+
+- **ADMIN**
+  - Acceso a la sección **Usuarios** (CRUD).
+  - En **Libros**: crear/editar/eliminar.
+  - En **Préstamos**: ver todos, registrar devoluciones y eliminar.
+
+- **USUARIO**
+  - No ve la sección **Usuarios**.
+  - En **Libros**: solo listado.
+  - En **Préstamos**: ve únicamente sus préstamos y al registrar un préstamo se usa su usuario de sesión.
+
+### Crear roles y asignar un administrador
+
+El esquema incluye la tabla `rol`. Para que la convención del código funcione (ADMIN=1, USUARIO=2), puedes insertar roles así:
+
+```sql
+INSERT INTO rol (id_rol, nombre_rol) VALUES (1, 'ADMIN')
+  ON DUPLICATE KEY UPDATE nombre_rol = 'ADMIN';
+
+INSERT INTO rol (id_rol, nombre_rol) VALUES (2, 'USUARIO')
+  ON DUPLICATE KEY UPDATE nombre_rol = 'USUARIO';
+```
+
+Luego, para convertir un usuario existente en administrador:
+
+```sql
+UPDATE usuario SET id_rol = 1 WHERE correo = 'admin@mail.com';
+```
+
+Si un usuario no tiene `id_rol` (NULL), el sistema lo trata como usuario normal para no romper datos antiguos.
+
+## Nota sobre errores de importación `javax.servlet`
 
 Si abres la carpeta `TuGestionAmigaWeb/src` como un proyecto Java normal, NetBeans puede mostrar errores como “no se encuentra `javax.servlet`”. Esto se resuelve cuando el proyecto se crea como **Aplicación web** y queda asociado a **Tomcat 9** (que aporta las librerías del API Servlet).
 
-### Solución de problemas (módulo web)
+## Solución de problemas (módulo web)
 
 - **Falla el despliegue por permisos (Program Files)**
   - Si Tomcat está instalado en `C:\Program Files\...`, NetBeans puede fallar al copiar archivos de contexto.
@@ -517,3 +419,235 @@ Si abres la carpeta `TuGestionAmigaWeb/src` como un proyecto Java normal, NetBea
 - **"No suitable driver found"**
   - Falta el conector JDBC de MySQL en el proyecto web o en el despliegue.
   - Verifica que `mysql-connector-j` esté agregado a Bibliotecas o dentro de `TuGestionAmigaWeb/web/WEB-INF/lib/`.
+
+# Parte 3 - Implementación del framework (explicación)
+
+En esta parte se describe cómo se implementó una estructura más ordenada (tipo framework) sobre la base clásica de **Servlets + JSP**, aplicando separación por capas y un flujo MVC más claro.
+
+## Cómo ejecutar el módulo web (resumen)
+
+Esta sección resume los pasos para ejecutar el módulo web desde NetBeans con Tomcat.
+
+1) **Crear la base de datos**
+   - Ejecuta el script SQL de la base (tablas y datos iniciales) en MySQL.
+
+2) **Configurar la conexión (`db.properties`)**
+   - Revisa `TuGestionAmigaWeb/web/WEB-INF/db.properties`.
+   - Ajusta host, puerto, nombre de BD, usuario y contraseña según tu MySQL.
+
+3) **Configurar el proyecto como Aplicación Web**
+   - Abre el proyecto en NetBeans como proyecto web.
+   - Asocia el servidor **Tomcat 9**.
+   - Verifica que el conector JDBC de MySQL esté disponible (por ejemplo `mysql-connector-j` en bibliotecas o en `WEB-INF/lib`).
+
+4) **Ejecutar**
+   - Ejecuta el proyecto (Run).
+   - Abre en el navegador la ruta de login.
+     - Ejemplo (si el contexto se llama `TuGestionAmigaWeb`):
+       - `http://localhost:8080/TuGestionAmigaWeb/login`
+
+## Creación de ADMIN por script (roles y usuario)
+
+El control de roles usa `usuario.id_rol` (FK a `rol`). Para que el módulo web reconozca el administrador se usa la convención:
+
+- `id_rol = 1`  ADMIN
+- `id_rol = 2`  USUARIO
+
+### 1) Insertar roles (si aún no existen)
+
+```sql
+USE tugestionamiga_db;
+
+INSERT INTO rol (id_rol, nombre_rol) VALUES (1, 'ADMIN')
+  ON DUPLICATE KEY UPDATE nombre_rol = 'ADMIN';
+
+INSERT INTO rol (id_rol, nombre_rol) VALUES (2, 'USUARIO')
+  ON DUPLICATE KEY UPDATE nombre_rol = 'USUARIO';
+```
+
+### 2) Crear un admin nuevo (o convertir si el correo ya existe)
+
+```sql
+USE tugestionamiga_db;
+
+INSERT INTO usuario (nombre, correo, `contraseña`, id_rol)
+VALUES ('Administrador', 'admin@mail.com', 'admin123', 1)
+ON DUPLICATE KEY UPDATE
+  nombre = VALUES(nombre),
+  `contraseña` = VALUES(`contraseña`),
+  id_rol = 1;
+```
+
+### 3) Convertir un usuario existente en admin
+
+```sql
+USE tugestionamiga_db;
+
+UPDATE usuario
+SET id_rol = 1
+WHERE correo = 'admin@mail.com';
+```
+
+## Arquitectura MVC aplicada
+
+- **Modelo:** clases Java que representan los datos (`Usuario`, `Libro`, `Prestamo`, `Rol`).
+- **Vista:** JSP que muestran información y contienen formularios.
+- **Controlador:** Servlets que reciben peticiones HTTP, validan parámetros y coordinan la respuesta.
+
+La idea es que cada capa tenga una responsabilidad específica para que el código sea más fácil de mantener.
+
+## Estructura del módulo web
+
+Carpetas principales:
+
+- `TuGestionAmigaWeb/src/`
+  - `controller/` (Servlets)
+  - `service/` (reglas del negocio/validaciones)
+  - `dao/` (acceso a datos y SQL)
+  - `model/` (POJOs)
+  - `util/` (conexión JDBC para web)
+  - `filter/` y `listener/` (sesión y carga de configuración)
+
+- `TuGestionAmigaWeb/web/`
+  - `index.jsp`
+  - `jsp/` (vistas)
+  - `css/` (estilos)
+  - `js/` (scripts)
+  - `WEB-INF/web.xml` (configuración y mapeos)
+
+## Conexión a base de datos en web
+
+- `util.ConexionBD` lee `WEB-INF/db.properties` usando `ServletContext.getResourceAsStream(...)`.
+- `listener.AppContextListener` carga las propiedades al iniciar la aplicación y las guarda en el `ServletContext`.
+- Los DAOs reciben el `ServletContext` para abrir conexiones con `ConexionBD.getConnection(context)`.
+
+Esto evita depender del directorio de trabajo (como en consola) y se adapta mejor al despliegue en Tomcat.
+
+## Seguridad básica (sesión)
+
+- `LoginServlet` valida el usuario y guarda el objeto en sesión como `usuarioLogueado`.
+- `filter.AuthFilter` bloquea el acceso a páginas internas si no existe sesión.
+- `LogoutServlet` invalida la sesión.
+
+## Rutas principales
+
+Rutas definidas en `web.xml`:
+
+- `GET/POST /login`
+- `GET/POST /register`
+- `GET /logout`
+- `GET /dashboard`
+- `GET/POST /usuarios`
+- `GET/POST /libros`
+- `GET/POST /prestamos`
+
+## Capa `service/` y separación por capas
+
+Se agregó la capa `service/` para que los Servlets no mezclen validaciones con SQL.
+
+- `service.UsuarioService`
+  - Autenticación.
+  - Registro público (validaciones de campos y correo único).
+  - Operaciones CRUD delegando en `UsuarioDAO`.
+
+- `service.LibroService`
+  - CRUD de libros delegando en `LibroDAO`.
+
+- `service.PrestamoService`
+  - Validación de fechas.
+  - Delegación del flujo prestar/devolver en `PrestamoDAO`.
+
+Con esto, el flujo queda más fácil de seguir:
+
+1) **Servlet** recibe parámetros y decide la acción.
+2) **Service** valida y aplica reglas.
+3) **DAO** ejecuta SQL y mapea resultados.
+4) **JSP** muestra datos y formularios.
+
+## Flujo explicado (ejemplos)
+
+### Inicio de sesión
+
+1) `GET /login` muestra `jsp/login.jsp`.
+2) `POST /login` lee `correo` y `contrasena`.
+3) `UsuarioService.autenticar(...)` consulta `UsuarioDAO.findByCorreoYContrasena(...)`.
+4) Si coincide, se guarda `usuarioLogueado` en sesión y se redirige a `/dashboard`.
+
+### CRUD de usuarios
+
+`controller.UsuarioServlet` usa el parámetro `accion`:
+
+- **GET listar:** carga lista y reenvía a `jsp/usuarios.jsp`.
+- **GET editar:** carga un usuario por id y lo pone en `usuarioEdit` para rellenar el formulario.
+- **POST crear/actualizar/eliminar:** ejecuta la operación y redirige a listar.
+
+Regla aplicada en servidor:
+
+- No se permite que el usuario con sesión iniciada se elimine a sí mismo, para evitar que la sesión quede apuntando a un usuario inexistente.
+
+### Préstamos y devoluciones
+
+- `PrestamoService.registrarPrestamo(...)` valida fechas y delega en `PrestamoDAO.registrarPrestamo(...)`.
+- En el DAO, el préstamo se maneja con transacción para mantener consistencia:
+  - Se inserta el préstamo.
+  - Se actualiza `libro.disponibilidad`.
+  - Se confirma o se revierte según el resultado.
+
+### Roles y permisos (ADMIN / USUARIO)
+
+Para que la aplicación sea más realista, se separó el comportamiento entre un **administrador** y un **usuario normal**.
+La base de datos ya tiene `usuario.id_rol` (FK a `rol`), así que se aprovechó ese campo para controlar permisos.
+
+En el código se manejó una convención simple:
+
+- `id_rol = 1` se toma como **ADMIN**.
+- `id_rol = 2` se toma como **USUARIO**.
+- Si `id_rol` viene en `NULL`, se trata como usuario normal para no romper registros que no tengan rol asignado.
+
+Para centralizar esa lógica se agregaron helpers en `model.Usuario`:
+
+- `esAdministrador()`
+- `esUsuario()`
+
+### Separación de permisos en backend (Servlets)
+
+Además de ocultar botones en la interfaz, se controlaron permisos en el servidor para que no baste con “editar el HTML”.
+
+- `controller.UsuarioServlet`
+  - Se dejó el CRUD de usuarios **solo para administradores**.
+  - Si un usuario normal intenta entrar, se redirige al dashboard con un mensaje.
+
+- `controller.LibroServlet`
+  - **Cualquier usuario** puede listar libros.
+  - Las acciones `crear`, `actualizar`, `eliminar` y `editar` quedaron **solo para administradores**.
+
+- `controller.PrestamoServlet`
+  - En modo **ADMIN**:
+    - carga todos los préstamos.
+    - permite registrar devoluciones y eliminar préstamos.
+    - al registrar un préstamo permite seleccionar el usuario.
+  - En modo **USUARIO**:
+    - el listado se limita a los préstamos del usuario logueado.
+    - al registrar un préstamo se fuerza el `idUsuario` desde la sesión.
+
+### Filtrado de préstamos por usuario (DAO/Service)
+
+Para que el usuario normal solo vea lo suyo, se agregó:
+
+- `dao.PrestamoDAO.findByUsuario(int idUsuario)`
+- `service.PrestamoService.listarPrestamosPorUsuario(int idUsuario)`
+
+Esto se usa desde `PrestamoServlet` cuando el usuario no es administrador.
+
+### Ajustes de interfaz por rol (JSP)
+
+Para que la experiencia sea más clara, la UI también se ajustó:
+
+- `jsp/dashboard.jsp`
+  - El enlace y la tarjeta de **Usuarios** solo aparecen para administradores.
+
+- `jsp/listarLibros.jsp`
+  - En modo usuario se oculta el formulario de registro/edición y las acciones de la tabla.
+
+- `jsp/prestamos.jsp`
+  - En modo usuario se oculta la selección de usuario, la sección de devoluciones y las acciones de eliminación.

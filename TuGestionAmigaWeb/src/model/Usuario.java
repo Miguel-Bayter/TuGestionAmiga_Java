@@ -15,6 +15,25 @@ package model;
  */
 public class Usuario {
 
+    /**
+     * Identificador esperado del rol ADMIN.
+     *
+     * <p>
+     * En el esquema existe la tabla {@code rol}. Para que esta convención funcione, se recomienda
+     * tener un registro con {@code id_rol=1} para ADMIN.
+     * </p>
+     */
+    public static final int ROL_ADMIN = 1;
+
+    /**
+     * Identificador esperado del rol USUARIO.
+     *
+     * <p>
+     * Se propone usar {@code id_rol=2} para el rol normal.
+     * </p>
+     */
+    public static final int ROL_USUARIO = 2;
+
     /** Identificador del usuario (PK). */
     private int idUsuario;
     /** Nombre del usuario. */
@@ -79,6 +98,24 @@ public class Usuario {
 
     public void setIdRol(Integer idRol) {
         this.idRol = idRol;
+    }
+
+    /**
+     * Indica si el usuario actual se considera administrador.
+     */
+    public boolean esAdministrador() {
+        return idRol != null && idRol == ROL_ADMIN;
+    }
+
+    /**
+     * Indica si el usuario actual se considera usuario normal.
+     *
+     * <p>
+     * Si {@code idRol} es {@code null}, se toma como usuario normal (para no romper registros antiguos).
+     * </p>
+     */
+    public boolean esUsuario() {
+        return idRol == null || idRol == ROL_USUARIO;
     }
 
     @Override

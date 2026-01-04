@@ -136,6 +136,38 @@ public class PrestamoDAO {
     }
 
     /**
+     * Lista los préstamos asociados a un usuario.
+     *
+     * <p>
+     * Se usa cuando la interfaz se muestra en modo "usuario" para que no pueda ver
+     * préstamos de otras personas.
+     * </p>
+     *
+     * <p>
+     * Nota: el control del rol se hace en el servlet, pero el filtrado real se ejecuta aquí en SQL.
+     * </p>
+     */
+    public List<Prestamo> findByUsuario(int idUsuario) throws SQLException {
+        String sql = "SELECT id_prestamo, fecha_prestamo, fecha_devolucion, estado, id_usuario, id_libro "
+                + "FROM prestamo WHERE id_usuario = ? ORDER BY id_prestamo";
+        List<Prestamo> prestamos = new ArrayList<>();
+
+        try (Connection conn = ConexionBD.getConnection(context);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idUsuario);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    prestamos.add(mapPrestamo(rs));
+                }
+            }
+        }
+
+        return prestamos;
+    }
+
+    /**
      * Actualiza un préstamo.
      *
      * <p>

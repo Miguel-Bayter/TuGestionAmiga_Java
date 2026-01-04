@@ -1,6 +1,5 @@
 package controller;
 
-import dao.UsuarioDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -8,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.Usuario;
+import service.UsuarioService;
 
 /**
  * Controla el inicio de sesión.
@@ -49,8 +49,8 @@ public class LoginServlet extends HttpServlet {
         }
 
         try {
-            UsuarioDAO dao = new UsuarioDAO(getServletContext());
-            Usuario usuario = dao.findByCorreoYContrasena(correo.trim(), contrasena.trim());
+            UsuarioService usuarioService = new UsuarioService(getServletContext());
+            Usuario usuario = usuarioService.autenticar(correo, contrasena);
 
             if (usuario == null) {
                 request.setAttribute("error", "Credenciales incorrectas.");
@@ -62,6 +62,10 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("usuarioLogueado", usuario);
 
             response.sendRedirect(request.getContextPath() + "/dashboard");
+
+        } catch (IllegalArgumentException ex) {
+            request.setAttribute("error", ex.getMessage());
+            request.getRequestDispatcher("/jsp/login.jsp").forward(request, response);
 
         } catch (Exception ex) {
             request.setAttribute("error", "Ocurrió un error al intentar iniciar sesión: " + ex.getMessage());

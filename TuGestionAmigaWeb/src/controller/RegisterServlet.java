@@ -1,13 +1,12 @@
 package controller;
 
-import dao.UsuarioDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import model.Usuario;
+import service.UsuarioService;
 
 /**
  * Controla el registro de usuarios desde la aplicación web.
@@ -46,47 +45,18 @@ public class RegisterServlet extends HttpServlet {
         String contrasena = request.getParameter("contrasena");
         String contrasena2 = request.getParameter("contrasena2");
 
-        // Validación básica: no permitir campos vacíos.
-        if (nombre == null || nombre.trim().isEmpty()
-                || correo == null || correo.trim().isEmpty()
-                || contrasena == null || contrasena.trim().isEmpty()
-                || contrasena2 == null || contrasena2.trim().isEmpty()) {
-            request.setAttribute("error", "Debes completar todos los campos.");
-            request.getRequestDispatcher("/jsp/register.jsp").forward(request, response);
-            return;
-        }
-
-        // Validación básica: que ambas contraseñas coincidan.
-        if (!contrasena.trim().equals(contrasena2.trim())) {
-            request.setAttribute("error", "Las contraseñas no coinciden.");
-            request.getRequestDispatcher("/jsp/register.jsp").forward(request, response);
-            return;
-        }
-
         try {
-            UsuarioDAO dao = new UsuarioDAO(getServletContext());
-
-            // Se valida que el correo sea único.
-            Usuario existente = dao.findByCorreo(correo.trim());
-            if (existente != null) {
-                request.setAttribute("error", "Ya existe un usuario registrado con ese correo.");
-                request.getRequestDispatcher("/jsp/register.jsp").forward(request, response);
-                return;
-            }
-
-            // Se construye el objeto Usuario para insertarlo en BD.
-            Usuario u = new Usuario();
-            u.setNombre(nombre.trim());
-            u.setCorreo(correo.trim());
-            u.setContrasena(contrasena.trim());
-            u.setIdRol(null);
-
-            dao.create(u);
+            UsuarioService usuarioService = new UsuarioService(getServletContext());
+            usuarioService.registrarUsuarioPublico(nombre, correo, contrasena, contrasena2);
 
             // Se usa sesión para mostrar un mensaje en la pantalla de login.
             HttpSession session = request.getSession(true);
             session.setAttribute("mensaje", "Registro exitoso. Ya puedes iniciar sesión.");
             response.sendRedirect(request.getContextPath() + "/login");
+
+        } catch (IllegalArgumentException ex) {
+            request.setAttribute("error", ex.getMessage());
+            request.getRequestDispatcher("/jsp/register.jsp").forward(request, response);
 
         } catch (Exception ex) {
             request.setAttribute("error", "Ocurrió un error al registrarse: " + ex.getMessage());
