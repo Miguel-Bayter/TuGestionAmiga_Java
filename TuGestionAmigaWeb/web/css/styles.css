@@ -1,0 +1,245 @@
+/*
+  Estilos básicos del módulo web.
+  La idea es que las pantallas se vean claras y ordenadas, sin depender de frameworks externos.
+*/
+
+:root {
+    --bg: #0b1020;
+    --card: #121a33;
+    --text: #e9ecf3;
+    --muted: #aab3c5;
+    --primary: #4b7bec;
+    --primary-2: #2d5be3;
+    --danger: #ff5c5c;
+    --ok: #35c76a;
+    --border: rgba(255,255,255,0.08);
+    --shadow: 0 14px 50px rgba(0,0,0,0.45);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    background: radial-gradient(1200px 700px at 10% 10%, #182454 0%, var(--bg) 45%, #070a14 100%);
+    color: var(--text);
+    line-height: 1.5;
+}
+
+a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.container.auth {
+    max-width: 520px;
+    padding-top: 56px;
+}
+
+h1, h2, h3 { margin: 0 0 12px 0; }
+
+.muted { color: var(--muted); margin-top: 6px; }
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.card {
+    background: rgba(18,26,51,0.92);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+}
+
+.auth-header {
+    margin-bottom: 14px;
+}
+
+.auth-title {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.card.link {
+    display: block;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.12s ease;
+}
+
+.card.link:hover {
+    transform: translateY(-2px);
+    border-color: rgba(75,123,236,0.5);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.form {
+    display: grid;
+    gap: 10px;
+}
+
+label {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(5,8,16,0.7);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: rgba(75,123,236,0.7);
+    box-shadow: 0 0 0 3px rgba(75,123,236,0.18);
+}
+
+textarea { resize: vertical; }
+
+button, .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.08s ease, background 0.15s ease, filter 0.15s ease;
+}
+
+button:hover, .btn:hover {
+    background: var(--primary-2);
+    text-decoration: none;
+}
+
+button:active, .btn:active {
+    transform: translateY(1px);
+}
+
+.btn-small {
+    padding: 7px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.btn-danger {
+    background: var(--danger);
+}
+
+.btn-danger:hover {
+    filter: brightness(0.95);
+}
+
+.alert {
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+}
+
+.alert-ok {
+    background: rgba(53,199,106,0.12);
+    border-color: rgba(53,199,106,0.35);
+}
+
+.alert-error {
+    background: rgba(255,92,92,0.12);
+    border-color: rgba(255,92,92,0.35);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 12px;
+    background: rgba(5,8,16,0.35);
+    border: 1px solid var(--border);
+}
+
+thead th {
+    text-align: left;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+}
+
+tbody td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+@media (max-width: 720px) {
+    .topbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .topbar-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.inline { display: inline; margin: 0; }
+
+.hint {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+code {
+    background: rgba(255,255,255,0.08);
+    padding: 2px 6px;
+    border-radius: 8px;
+}

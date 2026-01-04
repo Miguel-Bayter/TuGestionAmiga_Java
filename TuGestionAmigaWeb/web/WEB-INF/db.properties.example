@@ -1,0 +1,25 @@
+# ======================================================
+# Archivo de ejemplo para la conexión a MySQL (módulo web)
+# ======================================================
+#
+# Este archivo es un ejemplo.
+#
+# Uso recomendado:
+# 1) Copia este archivo y renómbralo a: db.properties
+# 2) Completa db.user y db.password con tus credenciales reales
+# 3) Deja el archivo db.properties dentro de: web/WEB-INF/
+#
+# IMPORTANTE:
+# - El archivo real db.properties está ignorado por .gitignore.
+# - Se lee desde el servidor (Tomcat) con ServletContext.getResourceAsStream("/WEB-INF/db.properties").
+
+# URL JDBC (ajusta host/puerto/base si es necesario)
+db.url=jdbc:mysql://localhost:3306/tugestionamiga_db?useSSL=false&serverTimezone=UTC
+
+# Credenciales
+db.user=root
+
+# Coloca aquí tu contraseña real
+# db.password=123456
+
+db.password=
