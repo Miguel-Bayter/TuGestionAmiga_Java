@@ -13,6 +13,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controlador del módulo de préstamos.
+ *
+ * <p>
+ * Reglas principales:
+ * </p>
+ *
+ * <ul>
+ *   <li><strong>ADMIN</strong>: ve todos los préstamos, puede registrar devoluciones y eliminar.</li>
+ *   <li><strong>USUARIO</strong>: ve solo sus préstamos y registra préstamos para sí mismo.</li>
+ * </ul>
+ *
+ * <p>
+ * Validación de fechas:
+ * </p>
+ *
+ * <ul>
+ *   <li>La fecha de préstamo debe ser la fecha actual.</li>
+ *   <li>La fecha de devolución no puede ser anterior a la fecha de préstamo.</li>
+ * </ul>
+ */
 @Controller
 public class PrestamosController {
 

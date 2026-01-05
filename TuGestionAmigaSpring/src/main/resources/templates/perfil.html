@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/app :: appPage('perfil', 'Perfil', 'Compras y préstamos del usuario', ~{::content})}">
+<div th:fragment="content">
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card tga-card mb-3">
+        <div class="card-body">
+            <div class="text-muted">Sesión: <strong sec:authentication="name"></strong></div>
+            <div class="text-muted" th:if="${usuario != null}">
+                Usuario: <strong th:text="${usuario.nombre}"></strong>
+                <span class="ms-2">(ID: <span th:text="${usuario.idUsuario}"></span>)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-6">
+            <div class="card tga-card h-100">
+                <div class="card-header">
+                    <strong><i class="bi bi-cart me-1"></i>Compras</strong>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive tga-table">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Fecha</th>
+                                <th>Libro</th>
+                                <th>Precio</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="c : ${compras}">
+                                <td th:text="${c.idCompra}"></td>
+                                <td th:text="${c.fechaCompra}"></td>
+                                <td>
+                                    <div>
+                                        <strong th:text="${c.titulo != null ? c.titulo : 'Libro #' + c.idLibro}"></strong>
+                                    </div>
+                                    <div class="text-muted small" th:text="${c.autor != null ? c.autor : ''}"></div>
+                                </td>
+                                <td th:text="${c.precio}"></td>
+                            </tr>
+                            <tr th:if="${compras == null || #lists.isEmpty(compras)}">
+                                <td colspan="4" class="text-muted">Sin compras registradas.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <div class="card tga-card h-100">
+                <div class="card-header">
+                    <strong><i class="bi bi-arrow-left-right me-1"></i>Préstamos</strong>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive tga-table">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Libro</th>
+                                <th>Préstamo</th>
+                                <th>Devolución</th>
+                                <th>Estado</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="p : ${prestamos}">
+                                <td th:text="${p.idPrestamo}"></td>
+                                <td>
+                                    <div>
+                                        <strong th:text="${p.titulo != null ? p.titulo : 'Libro #' + p.idLibro}"></strong>
+                                    </div>
+                                    <div class="text-muted small" th:text="${p.autor != null ? p.autor : ''}"></div>
+                                </td>
+                                <td th:text="${p.fechaPrestamo}"></td>
+                                <td th:text="${p.fechaDevolucion}"></td>
+                                <td>
+                                    <span th:if="${p.estado != null && #strings.equalsIgnoreCase(p.estado, 'DEVUELTO')}" class="badge text-bg-secondary">DEVUELTO</span>
+                                    <span th:unless="${p.estado != null && #strings.equalsIgnoreCase(p.estado, 'DEVUELTO')}" class="badge text-bg-success">ACTIVO</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${prestamos == null || #lists.isEmpty(prestamos)}">
+                                <td colspan="5" class="text-muted">Sin préstamos registrados.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

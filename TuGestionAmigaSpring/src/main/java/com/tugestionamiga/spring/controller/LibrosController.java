@@ -12,6 +12,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controlador del módulo de libros.
+ *
+ * <ul>
+ *   <li><strong>ADMIN</strong>: puede crear, editar, actualizar y eliminar libros.</li>
+ *   <li><strong>USUARIO</strong>: solo puede listar (lectura).</li>
+ * </ul>
+ *
+ * <p>
+ * Nota: en esta versión, la disponibilidad no se edita manualmente; se deriva de {@code stock > 0}.
+ * </p>
+ */
 @Controller
 public class LibrosController {
 

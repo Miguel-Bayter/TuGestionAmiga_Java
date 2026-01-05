@@ -6,6 +6,12 @@ CREATE TABLE rol (
   nombre_rol VARCHAR(50) NOT NULL UNIQUE
 );
 
+INSERT INTO rol (id_rol, nombre_rol) VALUES (1, 'ADMIN') AS new
+  ON DUPLICATE KEY UPDATE nombre_rol = new.nombre_rol;
+
+INSERT INTO rol (id_rol, nombre_rol) VALUES (2, 'USUARIO') AS new
+  ON DUPLICATE KEY UPDATE nombre_rol = new.nombre_rol;
+
 CREATE TABLE usuario (
   id_usuario INT AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
@@ -37,7 +43,8 @@ CREATE TABLE libro (
   titulo VARCHAR(150) NOT NULL,
   autor VARCHAR(100) NOT NULL,
   descripcion TEXT,
-  disponibilidad BOOLEAN NOT NULL,
+  stock INT NOT NULL DEFAULT 0,
+  disponibilidad BOOLEAN NOT NULL DEFAULT 0,
   id_categoria INT,
   FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
 );

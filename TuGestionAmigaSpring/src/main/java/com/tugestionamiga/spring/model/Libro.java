@@ -1,5 +1,17 @@
 package com.tugestionamiga.spring.model;
 
+/**
+ * Modelo (POJO) que representa un registro de la tabla {@code libro}.
+ *
+ * <p>
+ * En esta versión se añadió el atributo {@code stock} para controlar inventario.
+ * La aplicación utiliza la regla:
+ * </p>
+ *
+ * <pre>
+ * disponible = (stock &gt; 0)
+ * </pre>
+ */
 public class Libro {
 
     private int idLibro;

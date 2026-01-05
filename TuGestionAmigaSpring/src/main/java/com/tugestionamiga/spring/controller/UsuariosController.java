@@ -12,6 +12,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controlador del CRUD de usuarios.
+ *
+ * <p>
+ * Esta ruta está pensada para administración (rol ADMIN). Además de las operaciones CRUD,
+ * se incluye una validación para impedir que un usuario elimine su propia cuenta mientras
+ * tiene la sesión iniciada.
+ * </p>
+ */
 @Controller
 public class UsuariosController {
 

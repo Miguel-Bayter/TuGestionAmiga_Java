@@ -10,6 +10,18 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repositorio JDBC para la tabla {@code libro}.
+ *
+ * <p>
+ * En esta versión se maneja inventario por medio de la columna {@code stock}.
+ * La columna {@code disponibilidad} se recalcula automáticamente como:
+ * </p>
+ *
+ * <pre>
+ * disponibilidad = (stock &gt; 0)
+ * </pre>
+ */
 @Repository
 public class LibroRepository {
 

@@ -530,20 +530,73 @@ También puedes usar variables de entorno:
 - `DB_USER`
 - `DB_PASSWORD`
 
-## 5) Script para crear roles y un ADMIN (para probar)
+## 5) Mejoras implementadas en el módulo Spring (`TuGestionAmigaSpring`)
+
+En el módulo Spring se agregaron pantallas y flujos para que la experiencia sea equivalente (visual y funcional) al módulo web.
+
+- **Frontend (Thymeleaf) con layout reutilizable**
+  - Se crearon fragmentos para reutilizar el layout (navbar + sidebar) en todas las vistas.
+  - Se portaron estilos y scripts del módulo web a `static/`.
+
+- **Autenticación y registro**
+  - Pantalla de **login** y **registro** con validaciones (campos requeridos, contraseñas coinciden, correo único).
+  - Integración con **Spring Security** usando la base existente (`usuario`/`rol`).
+
+- **CRUD de Usuarios (solo ADMIN)**
+  - Listar / crear / editar / eliminar.
+  - Protección para evitar eliminar el usuario con la sesión actual.
+
+- **CRUD de Libros + Categorías (ADMIN para modificar)**
+  - Listado para todos.
+  - Crear/editar/eliminar solo para ADMIN.
+  - Selector de categoría (género) igual al módulo web.
+
+- **Stock en libros + consistencia automática de disponibilidad**
+  - Se agregó el campo `stock` a nivel de aplicación.
+  - La disponibilidad se calcula como `stock > 0`.
+  - **Nota:** para usar stock en la BD se requiere agregar la columna en MySQL (ver script más abajo).
+
+- **Préstamos con transacciones (stock)**
+  - Registrar préstamo: valida stock, registra préstamo y descuenta stock.
+  - Registrar devolución: marca DEVUELTO y repone stock.
+  - Validación de fechas: la **fecha de préstamo debe ser la actual** y la devolución no puede ser anterior.
+
+- **Compras (nuevo apartado)**
+  - Registro y listado de compras (`compra`).
+  - La compra registra el movimiento y actualiza stock de forma transaccional.
+
+- **Perfil del usuario (nuevo apartado)**
+  - Ruta `/perfil` con resumen del usuario en sesión.
+  - Tablas con libros **comprados** y **prestados** (incluyendo DEVUELTO) usando `JOIN` a `libro`.
+
+### Script de migración (requerido para stock)
+
+El esquema original solo trae `disponibilidad`. Para habilitar stock en MySQL:
 
 ```sql
 USE tugestionamiga_db;
 
-INSERT INTO rol (id_rol, nombre_rol) VALUES (1, 'ADMIN')
-  ON DUPLICATE KEY UPDATE nombre_rol='ADMIN';
+ALTER TABLE libro
+ADD COLUMN stock INT NOT NULL DEFAULT 0;
 
-INSERT INTO rol (id_rol, nombre_rol) VALUES (2, 'USUARIO')
-  ON DUPLICATE KEY UPDATE nombre_rol='USUARIO';
+UPDATE libro
+SET disponibilidad = (stock > 0);
+```
+
+## 6) Script para crear roles y un ADMIN (para probar)
+
+```sql
+USE tugestionamiga_db;
+
+-- Si ejecutaste sql/TuGestionAmiga_db.sql, los roles ADMIN/USUARIO ya vienen creados.
+-- Solo necesitas crear el usuario administrador de prueba.
 
 INSERT INTO usuario (nombre, correo, `contraseña`, id_rol)
 VALUES ('Administrador', 'admin@mail.com', 'admin123', 1)
-ON DUPLICATE KEY UPDATE id_rol = 1;
+ON DUPLICATE KEY UPDATE
+  nombre = 'Administrador',
+  `contraseña` = 'admin123',
+  id_rol = 1;
 ```
 
 ## 6) Cómo probar el módulo Spring Boot
@@ -567,6 +620,48 @@ Credenciales de prueba:
 - Contraseña: `admin123`
 
 Debe redirigir a `/dashboard` y mostrar el usuario y sus roles.
+
+### Prueba recomendada (flujo completo con stock, compras y perfil)
+
+Requisito: haber ejecutado `sql/TuGestionAmiga_db.sql` (ya incluye `categoria`, `rol` y la columna `stock` en `libro`).
+
+1) **Iniciar sesión**
+   - URL: `http://localhost:8080/login`
+   - Usuario: `admin@mail.com`
+   - Clave: `admin123`
+
+2) **Crear un libro con stock**
+   - Ir a: `http://localhost:8080/libros`
+   - Crear un libro con:
+     - Título / Autor (cualquiera)
+     - Stock: `3`
+   - Validar en el listado que:
+     - `Stock = 3`
+     - `Disponible = Sí`
+
+3) **Registrar un préstamo (consume stock)**
+   - Ir a: `http://localhost:8080/prestamos`
+   - Registrar un préstamo con:
+     - Fecha préstamo: <strong>hoy</strong> (la app no permite fechas pasadas/futuras)
+     - Fecha devolución: hoy o una fecha futura
+   - Validar en `Libros` que el stock bajó en 1.
+
+4) **Registrar devolución (reponer stock)**
+   - En `Préstamos`, registrar devolución con el ID del préstamo.
+   - Validar en `Libros` que el stock subió en 1.
+
+5) **Registrar una compra (consume stock)**
+   - Ir a: `http://localhost:8080/compras`
+   - Registrar una compra con:
+     - Fecha compra: hoy
+     - Precio: por ejemplo `25.00`
+   - Validar en `Libros` que el stock bajó en 1.
+
+6) **Ver Perfil**
+   - Ir a: `http://localhost:8080/perfil`
+   - Validar que aparezcan:
+     - Las compras del usuario (tabla Compras)
+     - Los préstamos (incluye ACTIVO/DEVUELTO)
 
 ### Opción B: ejecutar con Maven (si lo instalas)
 

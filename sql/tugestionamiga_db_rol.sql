@@ -46,6 +46,10 @@ CREATE TABLE `rol` (
 
 LOCK TABLES `rol` WRITE;
 /*!40000 ALTER TABLE `rol` DISABLE KEYS */;
+INSERT INTO `rol` (`id_rol`, `nombre_rol`) VALUES (1,'ADMIN') AS new
+ON DUPLICATE KEY UPDATE `nombre_rol` = new.`nombre_rol`;
+INSERT INTO `rol` (`id_rol`, `nombre_rol`) VALUES (2,'USUARIO') AS new
+ON DUPLICATE KEY UPDATE `nombre_rol` = new.`nombre_rol`;
 /*!40000 ALTER TABLE `rol` ENABLE KEYS */;
 UNLOCK TABLES;
 SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;

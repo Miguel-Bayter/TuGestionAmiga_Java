@@ -1,6 +1,7 @@
 package com.tugestionamiga.spring.repository;
 
 import com.tugestionamiga.spring.model.Compra;
+import com.tugestionamiga.spring.model.CompraPerfilRow;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -13,6 +14,20 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/**
+ * Repositorio JDBC para la tabla {@code compra}.
+ *
+ * <p>
+ * Permite listar compras y registrar una compra de forma transaccional.
+ * El registro de compra también actualiza el inventario del libro:
+ * </p>
+ *
+ * <ul>
+ *   <li>Valida stock del libro.</li>
+ *   <li>Inserta en {@code compra} (fecha, precio, usuario, libro).</li>
+ *   <li>Descuenta 1 unidad de stock y recalcula {@code disponibilidad}.</li>
+ * </ul>
+ */
 @Repository
 public class CompraRepository {
 
@@ -59,10 +74,42 @@ public class CompraRepository {
         );
     }
 
+    /**
+     * Variante de listado para la pantalla de perfil.
+     *
+     * <p>
+     * Une la compra con el libro para mostrar título/autor sin consultas extra.
+     * </p>
+     */
+    public List<CompraPerfilRow> findByUsuarioWithLibro(int idUsuario) {
+        return jdbcTemplate.query(
+                "SELECT c.id_compra, c.fecha_compra, c.precio, c.id_libro, l.titulo, l.autor "
+                + "FROM compra c LEFT JOIN libro l ON l.id_libro = c.id_libro "
+                + "WHERE c.id_usuario = ? ORDER BY c.id_compra",
+                (rs, rowNum) -> {
+                    CompraPerfilRow row = new CompraPerfilRow();
+                    row.setIdCompra(rs.getInt("id_compra"));
+                    row.setFechaCompra(rs.getDate("fecha_compra").toLocalDate());
+                    row.setPrecio(rs.getBigDecimal("precio"));
+                    int idLibro = rs.getInt("id_libro");
+                    row.setIdLibro(rs.wasNull() ? null : idLibro);
+                    row.setTitulo(rs.getString("titulo"));
+                    row.setAutor(rs.getString("autor"));
+                    return row;
+                },
+                idUsuario
+        );
+    }
+
     public boolean delete(int idCompra) {
         return jdbcTemplate.update("DELETE FROM compra WHERE id_compra = ?", idCompra) > 0;
     }
 
+    /**
+     * Registra una compra e impacta el stock del libro en una única transacción.
+     *
+     * @return id de la compra creada o -1 si el libro no existe/no tiene stock
+     */
     public int registrarCompra(int idUsuario, int idLibro, LocalDate fechaCompra, java.math.BigDecimal precio) {
         return tx.execute(status -> {
             Integer stock = jdbcTemplate.query(

@@ -14,6 +14,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controlador del módulo de compras.
+ *
+ * <p>
+ * Permite registrar compras y listar compras.
+ * </p>
+ *
+ * <ul>
+ *   <li><strong>ADMIN</strong>: puede registrar compras para cualquier usuario y eliminar compras.</li>
+ *   <li><strong>USUARIO</strong>: registra compras para sí mismo y ve solo sus compras.</li>
+ * </ul>
+ *
+ * <p>
+ * El registro de compra usa una transacción que inserta en {@code compra} y descuenta stock del libro.
+ * </p>
+ */
 @Controller
 public class ComprasController {
 
