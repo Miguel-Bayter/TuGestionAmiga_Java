@@ -1,36 +1,67 @@
 <!doctype html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Login - TuGestionAmiga</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}"/>
-</head>
-<body>
-<div class="container">
-    <div class="card">
-        <h1>Iniciar sesión</h1>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/auth :: authPage('Tu Gestión Amiga - Iniciar sesión', ~{::content})}">
+<div th:fragment="content" class="container py-5">
+    <div class="tga-auth-card">
+        <div class="card tga-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="rounded-3 bg-primary bg-opacity-10 p-2">
+                        <i class="bi bi-book-half text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="tga-auth-brand">Tu Gestión Amiga</div>
+                        <div class="text-muted">Acceso al módulo Spring</div>
+                    </div>
+                </div>
 
-        <div th:if="${param.error}" class="alert alert-error">
-            Credenciales inválidas.
+                <h1 class="h4 mb-4">Iniciar sesión</h1>
+
+                <div th:if="${param.error}" class="alert alert-danger">
+                    Credenciales inválidas.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success">
+                    Sesión cerrada.
+                </div>
+
+                <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+
+                <form th:action="@{/login}" method="post" class="row g-3">
+                    <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="col-12">
+                        <label class="form-label" for="username">Correo</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input id="username" type="email" class="form-control" name="username" autocomplete="username" required data-focus="true"/>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label" for="password">Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input id="password" type="password" class="form-control" name="password" autocomplete="current-password" required/>
+                        </div>
+                    </div>
+
+                    <div class="col-12 d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4 tga-form-hint">
+                    Nota: este login valida contra la tabla <code>usuario</code> (campo <code>correo</code> y <code>contraseña</code>).
+                </div>
+
+                <div class="mt-3 tga-form-hint">
+                    ¿No tienes cuenta?
+                    <a th:href="@{/register}" class="link-primary">Regístrate aquí</a>
+                </div>
+            </div>
         </div>
-        <div th:if="${param.logout}" class="alert">
-            Sesión cerrada.
-        </div>
-
-        <form th:action="@{/login}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <label for="username">Correo</label>
-            <input id="username" name="username" type="email" autocomplete="username" required/>
-
-            <label for="password">Contraseña</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required/>
-
-            <button type="submit">Entrar</button>
-        </form>
-
-        <p class="hint">Usa un usuario existente en la tabla <code>usuario</code>.</p>
     </div>
 </div>
-</body>
 </html>

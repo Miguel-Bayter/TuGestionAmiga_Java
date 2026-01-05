@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/app :: appPage('usuarios', 'Usuarios', 'CRUD de la tabla usuario', ~{::content})}">
+<div th:fragment="content">
+    <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row g-3">
+        <div class="col-xl-4">
+            <div class="card tga-card">
+                <div class="card-header">
+                    <strong th:text="${usuarioEdit != null ? 'Editar usuario' : 'Registrar usuario'}"></strong>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/usuarios}" method="post" class="row g-3">
+                        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="accion" th:value="${usuarioEdit != null ? 'actualizar' : 'crear'}"/>
+                        <input th:if="${usuarioEdit != null}" type="hidden" name="id" th:value="${usuarioEdit.idUsuario}"/>
+
+                        <div class="col-12">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="nombre" required
+                                   th:value="${usuarioEdit != null ? usuarioEdit.nombre : ''}"/>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Correo</label>
+                            <input type="email" class="form-control" name="correo" required
+                                   th:value="${usuarioEdit != null ? usuarioEdit.correo : ''}"/>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" name="contrasena" required
+                                   th:value="${usuarioEdit != null ? usuarioEdit.contrasena : ''}"/>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">ID Rol (opcional)</label>
+                            <input type="number" class="form-control" name="idRol"
+                                   th:value="${usuarioEdit != null && usuarioEdit.idRol != null ? usuarioEdit.idRol : ''}"/>
+                        </div>
+
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>
+                                <span th:text="${usuarioEdit != null ? 'Actualizar' : 'Registrar'}"></span>
+                            </button>
+                        </div>
+
+                        <div class="col-12 d-grid" th:if="${usuarioEdit != null}">
+                            <a class="btn btn-outline-secondary" th:href="@{/usuarios(accion='listar')}">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar edición
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div class="card tga-card">
+                <div class="card-header">
+                    <strong>Listado</strong>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive tga-table">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>ID Rol</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="u : ${usuarios}">
+                                <td th:text="${u.idUsuario}"></td>
+                                <td th:text="${u.nombre}"></td>
+                                <td th:text="${u.correo}"></td>
+                                <td th:text="${u.idRol != null ? u.idRol : ''}"></td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           th:href="@{/usuarios(accion='editar', id=${u.idUsuario})}">
+                                            <i class="bi bi-pencil me-1"></i>Editar
+                                        </a>
+
+                                        <button th:if="${idUsuarioSesion != null && idUsuarioSesion == u.idUsuario}"
+                                                type="button" class="btn btn-sm btn-outline-secondary" disabled
+                                                title="No puedes eliminar tu propio usuario">
+                                            <i class="bi bi-shield-lock me-1"></i>Eliminar
+                                        </button>
+
+                                        <form th:if="${idUsuarioSesion == null || idUsuarioSesion != u.idUsuario}"
+                                              th:action="@{/usuarios}" method="post" class="d-inline">
+                                            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <input type="hidden" name="accion" value="eliminar"/>
+                                            <input type="hidden" name="id" th:value="${u.idUsuario}"/>
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('¿Eliminar usuario?');">
+                                                <i class="bi bi-trash me-1"></i>Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

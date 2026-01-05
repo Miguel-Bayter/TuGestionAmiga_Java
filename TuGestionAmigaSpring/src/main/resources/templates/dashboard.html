@@ -1,29 +1,54 @@
 <!doctype html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Dashboard - TuGestionAmiga</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}"/>
-</head>
-<body>
-<div class="container">
-    <div class="topbar">
-        <h1>Dashboard</h1>
-        <form th:action="@{/logout}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <button type="submit" class="secondary">Salir</button>
-        </form>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/app :: appPage('dashboard', 'Dashboard', 'Panel principal del módulo Spring', ~{::content})}">
+<div th:fragment="content">
+    <div class="card tga-card mb-3">
+        <div class="card-body">
+            <h2 class="h5 mb-2">Bienvenido</h2>
+            <div class="text-muted">
+                Has iniciado sesión como
+                <strong sec:authentication="name"></strong>.
+                <span class="ms-1">Roles: <span sec:authentication="authorities"></span></span>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-        <p>Sesión iniciada como: <strong sec:authentication="name"></strong></p>
-        <p>Roles: <span sec:authentication="authorities"></span></p>
+    <div class="row g-3">
+        <div sec:authorize="hasRole('ADMIN')" class="col-md-6 col-xl-4">
+            <a class="card tga-card tga-hover text-decoration-none h-100" th:href="@{/usuarios}">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-people text-primary fs-4"></i>
+                        <h3 class="h6 m-0">Usuarios</h3>
+                    </div>
+                    <div class="text-muted">Crear, listar, editar y eliminar usuarios.</div>
+                </div>
+            </a>
+        </div>
 
-        <hr/>
+        <div class="col-md-6 col-xl-4">
+            <a class="card tga-card tga-hover text-decoration-none h-100" th:href="@{/libros}">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-journal-bookmark text-primary fs-4"></i>
+                        <h3 class="h6 m-0">Libros</h3>
+                    </div>
+                    <div class="text-muted">Administrar catálogo y disponibilidad.</div>
+                </div>
+            </a>
+        </div>
 
-        <p>Este es el arranque stand-alone con Spring Boot + Spring Security + Spring JDBC.</p>
+        <div class="col-md-6 col-xl-4">
+            <a class="card tga-card tga-hover text-decoration-none h-100" th:href="@{/prestamos}">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-arrow-left-right text-primary fs-4"></i>
+                        <h3 class="h6 m-0">Préstamos</h3>
+                    </div>
+                    <div class="text-muted">Registrar préstamos y devoluciones.</div>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
-</body>
 </html>
