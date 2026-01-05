@@ -64,7 +64,7 @@ public class LibrosController {
             @RequestParam(name = "titulo", required = false) String titulo,
             @RequestParam(name = "autor", required = false) String autor,
             @RequestParam(name = "descripcion", required = false) String descripcion,
-            @RequestParam(name = "disponible", required = false) String disponible,
+            @RequestParam(name = "stock", required = false) Integer stock,
             @RequestParam(name = "idCategoria", required = false) String idCategoria,
             Authentication authentication,
             RedirectAttributes redirectAttributes
@@ -79,7 +79,7 @@ public class LibrosController {
 
         try {
             if ("crear".equalsIgnoreCase(accionFinal)) {
-                Libro l = buildLibro(id, titulo, autor, descripcion, disponible, idCategoria, false);
+                Libro l = buildLibro(id, titulo, autor, descripcion, stock, idCategoria, false);
                 int newId = libroRepository.create(l);
                 redirectAttributes.addFlashAttribute(
                         "mensaje",
@@ -90,7 +90,7 @@ public class LibrosController {
                 if (id == null) {
                     throw new IllegalArgumentException("Falta el id del libro.");
                 }
-                Libro l = buildLibro(id, titulo, autor, descripcion, disponible, idCategoria, true);
+                Libro l = buildLibro(id, titulo, autor, descripcion, stock, idCategoria, true);
                 boolean ok = libroRepository.update(l);
                 redirectAttributes.addFlashAttribute("mensaje", ok ? "Libro actualizado." : "No se pudo actualizar el libro.");
 
@@ -109,7 +109,7 @@ public class LibrosController {
         return "redirect:/libros?accion=listar";
     }
 
-    private Libro buildLibro(Integer id, String titulo, String autor, String descripcion, String disponible, String idCategoriaStr, boolean includeId) {
+    private Libro buildLibro(Integer id, String titulo, String autor, String descripcion, Integer stock, String idCategoriaStr, boolean includeId) {
         Libro l = new Libro();
 
         if (includeId && id != null) {
@@ -120,8 +120,9 @@ public class LibrosController {
         l.setAutor(autor);
         l.setDescripcion(descripcion);
 
-        boolean disp = "1".equals(disponible) || "true".equalsIgnoreCase(disponible) || "on".equalsIgnoreCase(disponible);
-        l.setDisponible(disp);
+        int stockFinal = (stock == null) ? 0 : Math.max(stock, 0);
+        l.setStock(stockFinal);
+        l.setDisponible(stockFinal > 0);
 
         if (idCategoriaStr == null || idCategoriaStr.trim().isEmpty()) {
             l.setIdCategoria(null);

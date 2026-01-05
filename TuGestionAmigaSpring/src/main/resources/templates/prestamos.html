@@ -40,12 +40,14 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Fecha préstamo</label>
-                            <input type="date" class="form-control" name="fechaPrestamo" required/>
+                            <input type="date" class="form-control" name="fechaPrestamo" required
+                                   th:attr="min=${T(java.time.LocalDate).now()},max=${T(java.time.LocalDate).now()}"/>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Fecha devolución</label>
-                            <input type="date" class="form-control" name="fechaDevolucion" required/>
+                            <input type="date" class="form-control" name="fechaDevolucion" required
+                                   th:attr="min=${T(java.time.LocalDate).now()}"/>
                         </div>
 
                         <div class="col-12 d-grid">

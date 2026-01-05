@@ -101,6 +101,14 @@ public class PrestamosController {
                 LocalDate fPrestamo = LocalDate.parse(fechaPrestamo);
                 LocalDate fDevolucion = LocalDate.parse(fechaDevolucion);
 
+                LocalDate hoy = LocalDate.now();
+                if (!fPrestamo.equals(hoy)) {
+                    throw new IllegalArgumentException("La fecha de préstamo debe ser la fecha actual.");
+                }
+                if (fDevolucion.isBefore(fPrestamo)) {
+                    throw new IllegalArgumentException("La fecha de devolución no puede ser anterior a la fecha de préstamo.");
+                }
+
                 int newId = prestamoRepository.registrarPrestamo(idUsuarioFinal, idLibro, fPrestamo, fDevolucion);
 
                 if (newId > 0) {

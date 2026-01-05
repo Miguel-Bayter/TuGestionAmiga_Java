@@ -68,18 +68,18 @@ public class PrestamoRepository {
 
     public int registrarPrestamo(int idUsuario, int idLibro, LocalDate fechaPrestamo, LocalDate fechaDevolucion) {
         return tx.execute(status -> {
-            Boolean disponible = jdbcTemplate.query(
-                    "SELECT disponibilidad FROM libro WHERE id_libro = ? FOR UPDATE",
+            Integer stock = jdbcTemplate.query(
+                    "SELECT stock FROM libro WHERE id_libro = ? FOR UPDATE",
                     rs -> {
                         if (!rs.next()) {
                             return null;
                         }
-                        return rs.getBoolean("disponibilidad");
+                        return rs.getInt("stock");
                     },
                     idLibro
             );
 
-            if (disponible == null || !disponible) {
+            if (stock == null || stock <= 0) {
                 status.setRollbackOnly();
                 return -1;
             }
@@ -105,7 +105,13 @@ public class PrestamoRepository {
                 return -1;
             }
 
-            int updated = jdbcTemplate.update("UPDATE libro SET disponibilidad = 0 WHERE id_libro = ?", idLibro);
+            int newStock = stock - 1;
+            int updated = jdbcTemplate.update(
+                    "UPDATE libro SET stock = ?, disponibilidad = ? WHERE id_libro = ?",
+                    newStock,
+                    newStock > 0,
+                    idLibro
+            );
             if (updated <= 0) {
                 status.setRollbackOnly();
                 return -1;
@@ -144,7 +150,29 @@ public class PrestamoRepository {
                 return false;
             }
 
-            int upLibro = jdbcTemplate.update("UPDATE libro SET disponibilidad = 1 WHERE id_libro = ?", idLibro);
+            Integer stock = jdbcTemplate.query(
+                    "SELECT stock FROM libro WHERE id_libro = ? FOR UPDATE",
+                    rs -> {
+                        if (!rs.next()) {
+                            return null;
+                        }
+                        return rs.getInt("stock");
+                    },
+                    idLibro
+            );
+
+            if (stock == null) {
+                status.setRollbackOnly();
+                return false;
+            }
+
+            int newStock = stock + 1;
+            int upLibro = jdbcTemplate.update(
+                    "UPDATE libro SET stock = ?, disponibilidad = ? WHERE id_libro = ?",
+                    newStock,
+                    newStock > 0,
+                    idLibro
+            );
             if (upLibro <= 0) {
                 status.setRollbackOnly();
                 return false;

@@ -21,7 +21,7 @@ public class LibroRepository {
 
     public List<Libro> findAll() {
         return jdbcTemplate.query(
-                "SELECT l.id_libro, l.titulo, l.autor, l.descripcion, l.disponibilidad, l.id_categoria, c.nombre_categoria "
+                "SELECT l.id_libro, l.titulo, l.autor, l.descripcion, l.disponibilidad, l.stock, l.id_categoria, c.nombre_categoria "
                 + "FROM libro l LEFT JOIN categoria c ON c.id_categoria = l.id_categoria ORDER BY l.id_libro",
                 (rs, rowNum) -> {
                     Libro l = new Libro();
@@ -30,6 +30,7 @@ public class LibroRepository {
                     l.setAutor(rs.getString("autor"));
                     l.setDescripcion(rs.getString("descripcion"));
                     l.setDisponible(rs.getBoolean("disponibilidad"));
+                    l.setStock(rs.getInt("stock"));
                     int idCategoria = rs.getInt("id_categoria");
                     l.setIdCategoria(rs.wasNull() ? null : idCategoria);
                     l.setNombreCategoria(rs.getString("nombre_categoria"));
@@ -40,7 +41,7 @@ public class LibroRepository {
 
     public Optional<Libro> findById(int idLibro) {
         List<Libro> list = jdbcTemplate.query(
-                "SELECT l.id_libro, l.titulo, l.autor, l.descripcion, l.disponibilidad, l.id_categoria, c.nombre_categoria "
+                "SELECT l.id_libro, l.titulo, l.autor, l.descripcion, l.disponibilidad, l.stock, l.id_categoria, c.nombre_categoria "
                 + "FROM libro l LEFT JOIN categoria c ON c.id_categoria = l.id_categoria WHERE l.id_libro = ?",
                 (rs, rowNum) -> {
                     Libro l = new Libro();
@@ -49,6 +50,7 @@ public class LibroRepository {
                     l.setAutor(rs.getString("autor"));
                     l.setDescripcion(rs.getString("descripcion"));
                     l.setDisponible(rs.getBoolean("disponibilidad"));
+                    l.setStock(rs.getInt("stock"));
                     int idCategoria = rs.getInt("id_categoria");
                     l.setIdCategoria(rs.wasNull() ? null : idCategoria);
                     l.setNombreCategoria(rs.getString("nombre_categoria"));
@@ -63,17 +65,18 @@ public class LibroRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO libro (titulo, autor, descripcion, disponibilidad, id_categoria) VALUES (?, ?, ?, ?, ?)",
+                    "INSERT INTO libro (titulo, autor, descripcion, stock, disponibilidad, id_categoria) VALUES (?, ?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS
             );
             ps.setString(1, libro.getTitulo());
             ps.setString(2, libro.getAutor());
             ps.setString(3, libro.getDescripcion());
-            ps.setBoolean(4, libro.isDisponible());
+            ps.setInt(4, libro.getStock());
+            ps.setBoolean(5, libro.getStock() > 0);
             if (libro.getIdCategoria() == null) {
-                ps.setNull(5, java.sql.Types.INTEGER);
+                ps.setNull(6, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(5, libro.getIdCategoria());
+                ps.setInt(6, libro.getIdCategoria());
             }
             return ps;
         }, keyHolder);
@@ -84,18 +87,19 @@ public class LibroRepository {
 
     public boolean update(Libro libro) {
         int updated = jdbcTemplate.update(
-                "UPDATE libro SET titulo = ?, autor = ?, descripcion = ?, disponibilidad = ?, id_categoria = ? WHERE id_libro = ?",
+                "UPDATE libro SET titulo = ?, autor = ?, descripcion = ?, stock = ?, disponibilidad = ?, id_categoria = ? WHERE id_libro = ?",
                 ps -> {
                     ps.setString(1, libro.getTitulo());
                     ps.setString(2, libro.getAutor());
                     ps.setString(3, libro.getDescripcion());
-                    ps.setBoolean(4, libro.isDisponible());
+                    ps.setInt(4, libro.getStock());
+                    ps.setBoolean(5, libro.getStock() > 0);
                     if (libro.getIdCategoria() == null) {
-                        ps.setNull(5, java.sql.Types.INTEGER);
+                        ps.setNull(6, java.sql.Types.INTEGER);
                     } else {
-                        ps.setInt(5, libro.getIdCategoria());
+                        ps.setInt(6, libro.getIdCategoria());
                     }
-                    ps.setInt(6, libro.getIdLibro());
+                    ps.setInt(7, libro.getIdLibro());
                 }
         );
         return updated > 0;

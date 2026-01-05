@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/app :: appPage('compras', 'Compras', 'Registrar compras y controlar stock', ~{::content})}">
+<div th:fragment="content">
+    <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row g-3">
+        <div class="col-xl-6">
+            <div class="card tga-card">
+                <div class="card-header">
+                    <strong><i class="bi bi-cart-plus me-1"></i>Registrar compra</strong>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/compras}" method="post" class="row g-3">
+                        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="accion" value="registrarCompra"/>
+
+                        <div class="col-12" th:if="${esAdmin}">
+                            <label class="form-label">Usuario</label>
+                            <select class="form-select" name="idUsuario" required>
+                                <option value="">Seleccione...</option>
+                                <option th:each="u : ${usuarios}"
+                                        th:value="${u.idUsuario}"
+                                        th:text="${u.idUsuario + ' - ' + u.nombre + ' (' + u.correo + ')'}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Libro</label>
+                            <select class="form-select" name="idLibro" required>
+                                <option value="">Seleccione...</option>
+                                <option th:each="l : ${libros}"
+                                        th:value="${l.idLibro}"
+                                        th:text="${l.idLibro + ' - ' + l.titulo + ' (Stock: ' + l.stock + ')'}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha compra</label>
+                            <input type="date" class="form-control" name="fechaCompra" required/>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Precio</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="precio" required/>
+                        </div>
+
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check2-circle me-1"></i>Registrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card tga-card mt-3">
+        <div class="card-header">
+            <strong>Listado de compras</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive tga-table">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Precio</th>
+                        <th th:if="${esAdmin}">ID Usuario</th>
+                        <th>ID Libro</th>
+                        <th th:if="${esAdmin}">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${compras}">
+                        <td th:text="${c.idCompra}"></td>
+                        <td th:text="${c.fechaCompra}"></td>
+                        <td th:text="${c.precio}"></td>
+                        <td th:if="${esAdmin}" th:text="${c.idUsuario != null ? c.idUsuario : ''}"></td>
+                        <td th:text="${c.idLibro != null ? c.idLibro : ''}"></td>
+                        <td th:if="${esAdmin}">
+                            <form th:action="@{/compras}" method="post" class="d-inline">
+                                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" name="accion" value="eliminar"/>
+                                <input type="hidden" name="id" th:value="${c.idCompra}"/>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar compra?');">
+                                    <i class="bi bi-trash me-1"></i>Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

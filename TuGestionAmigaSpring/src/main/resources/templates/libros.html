@@ -36,11 +36,10 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Disponible</label>
-                            <select class="form-select" name="disponible">
-                                <option value="1" th:selected="${libroEdit == null || libroEdit.disponible}">Sí</option>
-                                <option value="0" th:selected="${libroEdit != null && !libroEdit.disponible}">No</option>
-                            </select>
+                            <label class="form-label">Stock</label>
+                            <input type="number" min="0" class="form-control" name="stock" required
+                                   th:value="${libroEdit != null ? libroEdit.stock : 0}"/>
+                            <div class="form-text">La disponibilidad se calcula automáticamente: <code>stock &gt; 0</code>.</div>
                         </div>
 
                         <div class="col-12">
@@ -85,6 +84,7 @@
                                 <th>ID</th>
                                 <th>Título</th>
                                 <th>Autor</th>
+                                <th>Stock</th>
                                 <th>Disponible</th>
                                 <th>Categoría</th>
                                 <th th:if="${esAdmin}">Acciones</th>
@@ -95,6 +95,7 @@
                                 <td th:text="${l.idLibro}"></td>
                                 <td th:text="${l.titulo}"></td>
                                 <td th:text="${l.autor}"></td>
+                                <td th:text="${l.stock}"></td>
                                 <td th:text="${l.disponible} ? 'Sí' : 'No'"></td>
                                 <td th:text="${l.idCategoria != null ? (l.idCategoria + ' - ' + (l.nombreCategoria != null ? l.nombreCategoria : '')) : '-'}"></td>
                                 <td th:if="${esAdmin}">

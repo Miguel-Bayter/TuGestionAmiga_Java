@@ -7,6 +7,7 @@ public class Libro {
     private String autor;
     private String descripcion;
     private boolean disponible;
+    private int stock;
     private Integer idCategoria;
     private String nombreCategoria;
 
@@ -48,6 +49,14 @@ public class Libro {
 
     public void setDisponible(boolean disponible) {
         this.disponible = disponible;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
     }
 
     public Integer getIdCategoria() {

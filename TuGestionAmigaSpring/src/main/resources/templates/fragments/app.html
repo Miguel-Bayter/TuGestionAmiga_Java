@@ -52,6 +52,7 @@
                         <a sec:authorize="hasRole('ADMIN')" class="nav-link" th:href="@{/usuarios}" th:classappend="${active} == 'usuarios' ? 'active' : ''"><i class="bi bi-people"></i>Usuarios</a>
                         <a class="nav-link" th:href="@{/libros}" th:classappend="${active} == 'libros' ? 'active' : ''"><i class="bi bi-journal-bookmark"></i>Libros</a>
                         <a class="nav-link" th:href="@{/prestamos}" th:classappend="${active} == 'prestamos' ? 'active' : ''"><i class="bi bi-arrow-left-right"></i>Préstamos</a>
+                        <a class="nav-link" th:href="@{/compras}" th:classappend="${active} == 'compras' ? 'active' : ''"><i class="bi bi-cart"></i>Compras</a>
                     </nav>
                 </div>
             </div>
