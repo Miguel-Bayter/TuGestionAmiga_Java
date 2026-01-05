@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Dashboard - TuGestionAmiga</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h1>Dashboard</h1>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="secondary">Salir</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <p>Sesión iniciada como: <strong sec:authentication="name"></strong></p>
+        <p>Roles: <span sec:authentication="authorities"></span></p>
+
+        <hr/>
+
+        <p>Este es el arranque stand-alone con Spring Boot + Spring Security + Spring JDBC.</p>
+    </div>
+</div>
+</body>
+</html>

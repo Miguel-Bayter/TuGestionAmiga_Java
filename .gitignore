@@ -40,6 +40,12 @@
 # Módulo web: configuración local (no versionar)
 /TuGestionAmigaWeb/web/WEB-INF/db.properties
 
+# Módulo Spring Boot: configuración local (no versionar)
+/TuGestionAmigaSpring/src/main/resources/application.properties
+
+# Maven
+/TuGestionAmigaSpring/target/
+
 # =====================
 # Sistema operativo / IDE
 # =====================

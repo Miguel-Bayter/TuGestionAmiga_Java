@@ -20,6 +20,18 @@ CREATE TABLE categoria (
   nombre_categoria VARCHAR(100) NOT NULL
 );
 
+INSERT INTO categoria (nombre_categoria) VALUES
+  ('Novela'),
+  ('Ciencia ficción'),
+  ('Fantasía'),
+  ('Historia'),
+  ('Tecnología'),
+  ('Biografía'),
+  ('Infantil'),
+  ('Terror'),
+  ('Romance'),
+  ('Poesía');
+
 CREATE TABLE libro (
   id_libro INT AUTO_INCREMENT PRIMARY KEY,
   titulo VARCHAR(150) NOT NULL,

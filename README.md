@@ -362,7 +362,15 @@ Pasos:
    - Eliminar usuario (no se permite eliminar el mismo usuario que tiene la sesión iniciada).
 
 2) **Libros**
-   - Crear libro disponible.
+   - (Si quieres probar el selector de Género/Categoría) asegúrate de tener categorías:
+
+```sql
+USE tugestionamiga_db;
+INSERT INTO categoria (nombre_categoria) VALUES
+('Novela'),('Ciencia ficción'),('Fantasía');
+```
+
+   - Crear libro disponible y seleccionar un **Género/Categoría**.
    - Editar libro.
    - Eliminar libro.
 
@@ -420,234 +428,203 @@ Si abres la carpeta `TuGestionAmigaWeb/src` como un proyecto Java normal, NetBea
   - Falta el conector JDBC de MySQL en el proyecto web o en el despliegue.
   - Verifica que `mysql-connector-j` esté agregado a Bibliotecas o dentro de `TuGestionAmigaWeb/web/WEB-INF/lib/`.
 
-# Parte 3 - Implementación del framework (explicación)
 
-En esta parte se describe cómo se implementó una estructura más ordenada (tipo framework) sobre la base clásica de **Servlets + JSP**, aplicando separación por capas y un flujo MVC más claro.
+# Parte 3 - Implementación de framework (Servlets/JSP y Spring Boot)
 
-## Cómo ejecutar el módulo web (resumen)
+En esta parte se explica la estructura tipo framework que se aplicó al proyecto y el módulo stand-alone agregado con **Spring Boot**.
 
-Esta sección resume los pasos para ejecutar el módulo web desde NetBeans con Tomcat.
+## 1) Enfoque del repositorio (dos módulos)
 
-1) **Crear la base de datos**
-   - Ejecuta el script SQL de la base (tablas y datos iniciales) en MySQL.
+En el repositorio conviven dos enfoques:
 
-2) **Configurar la conexión (`db.properties`)**
-   - Revisa `TuGestionAmigaWeb/web/WEB-INF/db.properties`.
-   - Ajusta host, puerto, nombre de BD, usuario y contraseña según tu MySQL.
+1) **Web clásico (Servlets + JSP)**
+   - Carpeta: `TuGestionAmigaWeb/`
+   - Se ejecuta en **Tomcat 9**.
+   - Arquitectura en capas: `controller/` → `service/` → `dao/` → `model/`.
 
-3) **Configurar el proyecto como Aplicación Web**
-   - Abre el proyecto en NetBeans como proyecto web.
-   - Asocia el servidor **Tomcat 9**.
-   - Verifica que el conector JDBC de MySQL esté disponible (por ejemplo `mysql-connector-j` en bibliotecas o en `WEB-INF/lib`).
+### Mejora aplicada en el módulo web: selector de Categoría/Género en Libros
 
-4) **Ejecutar**
-   - Ejecuta el proyecto (Run).
-   - Abre en el navegador la ruta de login.
-     - Ejemplo (si el contexto se llama `TuGestionAmigaWeb`):
-       - `http://localhost:8080/TuGestionAmigaWeb/login`
+En la pantalla de **Libros** se mejoró el campo “ID Categoría” para que no se tenga que memorizar un número.
+Ahora el formulario muestra un **selector** con los géneros disponibles (tabla `categoria`) y guarda el `id_categoria` correspondiente.
 
-## Creación de ADMIN por script (roles y usuario)
+Archivos agregados/modificados:
 
-El control de roles usa `usuario.id_rol` (FK a `rol`). Para que el módulo web reconozca el administrador se usa la convención:
+- `TuGestionAmigaWeb/src/model/Categoria.java`
+  - Representa un género/categoría (`id_categoria`, `nombre_categoria`).
+- `TuGestionAmigaWeb/src/dao/CategoriaDAO.java`
+  - Consulta las categorías con `findAll()`.
+- `TuGestionAmigaWeb/src/service/CategoriaService.java`
+  - Expone `listarCategorias()` para que el servlet no tenga SQL.
+- `TuGestionAmigaWeb/src/controller/LibroServlet.java`
+  - Carga la lista de categorías y la pasa a la JSP como `categorias`.
+- `TuGestionAmigaWeb/web/jsp/listarLibros.jsp`
+  - Reemplaza el input numérico por un `<select>` con “ID - Nombre”.
+  - En el listado muestra la categoría en formato “ID - Nombre”.
 
-- `id_rol = 1`  ADMIN
-- `id_rol = 2`  USUARIO
+Además, se agregaron categorías de ejemplo en los scripts SQL para que el selector tenga opciones en una instalación nueva:
 
-### 1) Insertar roles (si aún no existen)
+- `sql/TuGestionAmiga_db.sql`
+- `sql/tugestionamiga_db_categoria.sql`
+
+2) **Stand-alone con Spring Boot**
+   - Carpeta: `TuGestionAmigaSpring/`
+   - Se ejecuta como aplicación stand-alone (servidor embebido).
+   - Stack: **Spring Boot + Thymeleaf + Spring JDBC + Spring Security**.
+
+## 2) Framework usado en el módulo Spring (`TuGestionAmigaSpring`)
+
+El módulo `TuGestionAmigaSpring` se agregó para que la aplicación se pueda ejecutar sin Tomcat externo.
+
+- **Spring Boot**
+  - Aporta el arranque automático y el servidor embebido.
+- **Spring MVC**
+  - Controladores web con anotaciones (`@Controller`, `@GetMapping`).
+- **Thymeleaf**
+  - Reemplaza JSP para renderizar vistas del lado servidor.
+- **Spring JDBC**
+  - Manejo de conexión a MySQL por `DataSource` (sin JPA/Hibernate por ahora).
+- **Spring Security**
+  - Maneja el flujo de autenticación (login/logout) y protege rutas.
+
+### Rutas base (Spring)
+
+- `GET /login` muestra el formulario.
+- `POST /login` lo procesa Spring Security.
+- `GET /dashboard` es una ruta protegida (solo logueados).
+- `POST /logout` cierra sesión.
+
+## 3) Seguridad con base de datos existente (usuario/rol)
+
+La autenticación se conecta a la misma base MySQL del proyecto.
+
+- Tabla `usuario`:
+  - `correo` se usa como `username`.
+  - La columna de contraseña se llama ``contraseña`` (incluye `ñ`).
+
+- Tabla `rol`:
+  - `nombre_rol` se convierte en autoridad con el prefijo `ROLE_` (por ejemplo `ROLE_ADMIN`).
+
+En `SecurityConfig` se definieron queries JDBC para que Spring Security consulte:
+
+- Usuario + contraseña
+- Roles/autorizaciones
+
+Nota: por compatibilidad con el esquema actual, se usa `{noop}` para validar contraseñas en texto plano.
+
+## 4) Configuración de BD en Spring (opción C)
+
+Para no subir credenciales, se dejó un archivo de plantilla y el archivo real queda ignorado por Git.
+
+1) Copia:
+   - `TuGestionAmigaSpring/src/main/resources/application.properties.example`
+   a:
+   - `TuGestionAmigaSpring/src/main/resources/application.properties`
+
+2) Edita `application.properties` con tu configuración MySQL.
+
+También puedes usar variables de entorno:
+
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+
+## 5) Script para crear roles y un ADMIN (para probar)
 
 ```sql
 USE tugestionamiga_db;
 
 INSERT INTO rol (id_rol, nombre_rol) VALUES (1, 'ADMIN')
-  ON DUPLICATE KEY UPDATE nombre_rol = 'ADMIN';
+  ON DUPLICATE KEY UPDATE nombre_rol='ADMIN';
 
 INSERT INTO rol (id_rol, nombre_rol) VALUES (2, 'USUARIO')
-  ON DUPLICATE KEY UPDATE nombre_rol = 'USUARIO';
-```
-
-### 2) Crear un admin nuevo (o convertir si el correo ya existe)
-
-```sql
-USE tugestionamiga_db;
+  ON DUPLICATE KEY UPDATE nombre_rol='USUARIO';
 
 INSERT INTO usuario (nombre, correo, `contraseña`, id_rol)
 VALUES ('Administrador', 'admin@mail.com', 'admin123', 1)
-ON DUPLICATE KEY UPDATE
-  nombre = VALUES(nombre),
-  `contraseña` = VALUES(`contraseña`),
-  id_rol = 1;
+ON DUPLICATE KEY UPDATE id_rol = 1;
 ```
 
-### 3) Convertir un usuario existente en admin
+## 6) Cómo probar el módulo Spring Boot
+
+### Opción A: ejecutar desde NetBeans (sin `mvn`)
+
+Si Windows te muestra que `mvn` no existe, puedes ejecutar con NetBeans:
+
+1) `File > Open Project...`
+2) Abre la carpeta `TuGestionAmigaSpring/`.
+3) NetBeans debe reconocerlo como proyecto Maven.
+4) Click derecho al proyecto → `Run`.
+
+Luego abre:
+
+- `http://localhost:8080/login`
+
+Credenciales de prueba:
+
+- Correo: `admin@mail.com`
+- Contraseña: `admin123`
+
+Debe redirigir a `/dashboard` y mostrar el usuario y sus roles.
+
+### Opción B: ejecutar con Maven (si lo instalas)
+
+```bash
+mvn spring-boot:run
+```
+
+### Opción C: empaquetar y ejecutar como `.jar`
+
+```bash
+mvn -DskipTests package
+java -jar target/tugestionamiga-spring-0.0.1-SNAPSHOT.jar
+```
+
+## 7) Documentación agregada en el código (Spring)
+
+Para que el funcionamiento quede claro se agregaron Javadoc y descripciones en:
+
+- `TuGestionAmigaSpringApplication` (arranque stand-alone)
+- `SecurityConfig` (queries JDBC, roles y `{noop}`)
+- `AuthController` (GET /login)
+- `DashboardController` (ruta protegida para validar login)
+
+## 8) Cómo probar el selector de Categoría/Género en Libros (módulo web)
+
+Requisito: estar ejecutando el módulo web `TuGestionAmigaWeb` en Tomcat 9.
+
+1) **Asegurar que existan categorías**
+   - Si usaste `sql/TuGestionAmiga_db.sql` desde cero, ya se insertan categorías.
+   - Si tu BD ya existía y no tiene datos, inserta algunas:
+
+```sql
+USE tugestionamiga_db;
+INSERT INTO categoria (nombre_categoria) VALUES
+('Novela'),('Ciencia ficción'),('Fantasía');
+```
+
+2) **Entrar a Libros**
+   - Inicia sesión como ADMIN.
+   - Ve a `/libros?accion=listar`.
+
+3) **Crear un libro con categoría**
+   - En el formulario “Registrar libro”, elige una opción en “Género / Categoría”.
+   - Guarda.
+
+4) **Validar en el listado**
+   - En la columna “Categoría” debe verse “ID - Nombre”.
+
+5) **Validar en base de datos (opcional)**
 
 ```sql
 USE tugestionamiga_db;
 
-UPDATE usuario
-SET id_rol = 1
-WHERE correo = 'admin@mail.com';
+SELECT l.id_libro, l.titulo, l.id_categoria, c.nombre_categoria
+FROM libro l
+LEFT JOIN categoria c ON c.id_categoria = l.id_categoria
+ORDER BY l.id_libro;
 ```
 
-## Arquitectura MVC aplicada
+Si seleccionas “-- Sin categoría --”, el libro se guarda con `id_categoria` en `NULL`.
 
-- **Modelo:** clases Java que representan los datos (`Usuario`, `Libro`, `Prestamo`, `Rol`).
-- **Vista:** JSP que muestran información y contienen formularios.
-- **Controlador:** Servlets que reciben peticiones HTTP, validan parámetros y coordinan la respuesta.
-
-La idea es que cada capa tenga una responsabilidad específica para que el código sea más fácil de mantener.
-
-## Estructura del módulo web
-
-Carpetas principales:
-
-- `TuGestionAmigaWeb/src/`
-  - `controller/` (Servlets)
-  - `service/` (reglas del negocio/validaciones)
-  - `dao/` (acceso a datos y SQL)
-  - `model/` (POJOs)
-  - `util/` (conexión JDBC para web)
-  - `filter/` y `listener/` (sesión y carga de configuración)
-
-- `TuGestionAmigaWeb/web/`
-  - `index.jsp`
-  - `jsp/` (vistas)
-  - `css/` (estilos)
-  - `js/` (scripts)
-  - `WEB-INF/web.xml` (configuración y mapeos)
-
-## Conexión a base de datos en web
-
-- `util.ConexionBD` lee `WEB-INF/db.properties` usando `ServletContext.getResourceAsStream(...)`.
-- `listener.AppContextListener` carga las propiedades al iniciar la aplicación y las guarda en el `ServletContext`.
-- Los DAOs reciben el `ServletContext` para abrir conexiones con `ConexionBD.getConnection(context)`.
-
-Esto evita depender del directorio de trabajo (como en consola) y se adapta mejor al despliegue en Tomcat.
-
-## Seguridad básica (sesión)
-
-- `LoginServlet` valida el usuario y guarda el objeto en sesión como `usuarioLogueado`.
-- `filter.AuthFilter` bloquea el acceso a páginas internas si no existe sesión.
-- `LogoutServlet` invalida la sesión.
-
-## Rutas principales
-
-Rutas definidas en `web.xml`:
-
-- `GET/POST /login`
-- `GET/POST /register`
-- `GET /logout`
-- `GET /dashboard`
-- `GET/POST /usuarios`
-- `GET/POST /libros`
-- `GET/POST /prestamos`
-
-## Capa `service/` y separación por capas
-
-Se agregó la capa `service/` para que los Servlets no mezclen validaciones con SQL.
-
-- `service.UsuarioService`
-  - Autenticación.
-  - Registro público (validaciones de campos y correo único).
-  - Operaciones CRUD delegando en `UsuarioDAO`.
-
-- `service.LibroService`
-  - CRUD de libros delegando en `LibroDAO`.
-
-- `service.PrestamoService`
-  - Validación de fechas.
-  - Delegación del flujo prestar/devolver en `PrestamoDAO`.
-
-Con esto, el flujo queda más fácil de seguir:
-
-1) **Servlet** recibe parámetros y decide la acción.
-2) **Service** valida y aplica reglas.
-3) **DAO** ejecuta SQL y mapea resultados.
-4) **JSP** muestra datos y formularios.
-
-## Flujo explicado (ejemplos)
-
-### Inicio de sesión
-
-1) `GET /login` muestra `jsp/login.jsp`.
-2) `POST /login` lee `correo` y `contrasena`.
-3) `UsuarioService.autenticar(...)` consulta `UsuarioDAO.findByCorreoYContrasena(...)`.
-4) Si coincide, se guarda `usuarioLogueado` en sesión y se redirige a `/dashboard`.
-
-### CRUD de usuarios
-
-`controller.UsuarioServlet` usa el parámetro `accion`:
-
-- **GET listar:** carga lista y reenvía a `jsp/usuarios.jsp`.
-- **GET editar:** carga un usuario por id y lo pone en `usuarioEdit` para rellenar el formulario.
-- **POST crear/actualizar/eliminar:** ejecuta la operación y redirige a listar.
-
-Regla aplicada en servidor:
-
-- No se permite que el usuario con sesión iniciada se elimine a sí mismo, para evitar que la sesión quede apuntando a un usuario inexistente.
-
-### Préstamos y devoluciones
-
-- `PrestamoService.registrarPrestamo(...)` valida fechas y delega en `PrestamoDAO.registrarPrestamo(...)`.
-- En el DAO, el préstamo se maneja con transacción para mantener consistencia:
-  - Se inserta el préstamo.
-  - Se actualiza `libro.disponibilidad`.
-  - Se confirma o se revierte según el resultado.
-
-### Roles y permisos (ADMIN / USUARIO)
-
-Para que la aplicación sea más realista, se separó el comportamiento entre un **administrador** y un **usuario normal**.
-La base de datos ya tiene `usuario.id_rol` (FK a `rol`), así que se aprovechó ese campo para controlar permisos.
-
-En el código se manejó una convención simple:
-
-- `id_rol = 1` se toma como **ADMIN**.
-- `id_rol = 2` se toma como **USUARIO**.
-- Si `id_rol` viene en `NULL`, se trata como usuario normal para no romper registros que no tengan rol asignado.
-
-Para centralizar esa lógica se agregaron helpers en `model.Usuario`:
-
-- `esAdministrador()`
-- `esUsuario()`
-
-### Separación de permisos en backend (Servlets)
-
-Además de ocultar botones en la interfaz, se controlaron permisos en el servidor para que no baste con “editar el HTML”.
-
-- `controller.UsuarioServlet`
-  - Se dejó el CRUD de usuarios **solo para administradores**.
-  - Si un usuario normal intenta entrar, se redirige al dashboard con un mensaje.
-
-- `controller.LibroServlet`
-  - **Cualquier usuario** puede listar libros.
-  - Las acciones `crear`, `actualizar`, `eliminar` y `editar` quedaron **solo para administradores**.
-
-- `controller.PrestamoServlet`
-  - En modo **ADMIN**:
-    - carga todos los préstamos.
-    - permite registrar devoluciones y eliminar préstamos.
-    - al registrar un préstamo permite seleccionar el usuario.
-  - En modo **USUARIO**:
-    - el listado se limita a los préstamos del usuario logueado.
-    - al registrar un préstamo se fuerza el `idUsuario` desde la sesión.
-
-### Filtrado de préstamos por usuario (DAO/Service)
-
-Para que el usuario normal solo vea lo suyo, se agregó:
-
-- `dao.PrestamoDAO.findByUsuario(int idUsuario)`
-- `service.PrestamoService.listarPrestamosPorUsuario(int idUsuario)`
-
-Esto se usa desde `PrestamoServlet` cuando el usuario no es administrador.
-
-### Ajustes de interfaz por rol (JSP)
-
-Para que la experiencia sea más clara, la UI también se ajustó:
-
-- `jsp/dashboard.jsp`
-  - El enlace y la tarjeta de **Usuarios** solo aparecen para administradores.
-
-- `jsp/listarLibros.jsp`
-  - En modo usuario se oculta el formulario de registro/edición y las acciones de la tabla.
-
-- `jsp/prestamos.jsp`
-  - En modo usuario se oculta la selección de usuario, la sección de devoluciones y las acciones de eliminación.

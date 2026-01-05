@@ -6,8 +6,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import model.Categoria;
 import model.Libro;
 import model.Usuario;
+import service.CategoriaService;
 import service.LibroService;
 
 /**
@@ -51,6 +53,10 @@ public class LibroServlet extends HttpServlet {
 
         try {
             LibroService libroService = new LibroService(getServletContext());
+            CategoriaService categoriaService = new CategoriaService(getServletContext());
+
+            List<Categoria> categorias = categoriaService.listarCategorias();
+            request.setAttribute("categorias", categorias);
 
             if ("editar".equalsIgnoreCase(accion)) {
                 // Solo un administrador puede entrar a modo edición.

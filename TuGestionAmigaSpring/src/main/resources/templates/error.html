@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Error - TuGestionAmiga</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Ocurrió un error</h1>
+        <p th:text="${error}"></p>
+        <p th:if="${message}" th:text="${message}"></p>
+        <p><a th:href="@{/dashboard}" style="color:#9bbcff;">Volver</a></p>
+    </div>
+</div>
+</body>
+</html>

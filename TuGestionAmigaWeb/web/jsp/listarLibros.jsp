@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.util.List"%>
+<%@page import="model.Categoria"%>
 <%@page import="model.Libro"%>
 <%@page import="model.Usuario"%>
 <!DOCTYPE html>
@@ -85,6 +86,8 @@
             <%
                 Libro libroEdit = (Libro) request.getAttribute("libroEdit");
                 boolean editando = (libroEdit != null && libroEdit.getIdLibro() > 0);
+
+                List<Categoria> categorias = (List<Categoria>) request.getAttribute("categorias");
             %>
 
                     <div class="row g-3">
@@ -126,8 +129,24 @@
                                         </div>
 
                                         <div class="col-12">
-                                            <label class="form-label">ID Categoría (opcional)</label>
-                                            <input type="number" class="form-control" name="idCategoria" value="<%= (editando && libroEdit.getIdCategoria() != null) ? libroEdit.getIdCategoria() : "" %>">
+                                            <label class="form-label">Género / Categoría (opcional)</label>
+                                            <select class="form-select" name="idCategoria">
+                                                <option value="" <%= (!editando || libroEdit.getIdCategoria() == null) ? "selected" : "" %>>-- Sin categoría --</option>
+                                                <%
+                                                    if (categorias != null) {
+                                                        for (Categoria c : categorias) {
+                                                            boolean selected = editando
+                                                                    && libroEdit.getIdCategoria() != null
+                                                                    && libroEdit.getIdCategoria() == c.getIdCategoria();
+                                                %>
+                                                <option value="<%= c.getIdCategoria() %>" <%= selected ? "selected" : "" %>>
+                                                    <%= c.getIdCategoria() %> - <%= c.getNombreCategoria() %>
+                                                </option>
+                                                <%
+                                                        }
+                                                    }
+                                                %>
+                                            </select>
                                         </div>
 
                                         <div class="col-12 d-grid">
@@ -163,7 +182,7 @@
                                                     <th>Título</th>
                                                     <th>Autor</th>
                                                     <th>Disponible</th>
-                                                    <th>ID Categoría</th>
+                                                    <th>Categoría</th>
                                                     <% if (esAdmin) { %><th>Acciones</th><% } %>
                                                 </tr>
                                             </thead>
@@ -177,20 +196,30 @@
                             <td><%= l.getIdLibro() %></td>
                             <td><%= l.getTitulo() %></td>
                             <td><%= l.getAutor() %></td>
+                            <td><%= l.isDisponible() ? "Sí" : "No" %></td>
                             <td>
-                                <% if (l.isDisponible()) { %>
-                                    <span class="badge text-bg-success">Disponible</span>
-                                <% } else { %>
-                                    <span class="badge text-bg-secondary">No disponible</span>
-                                <% } %>
+                                <%
+                                    String categoriaTexto = "-";
+                                    if (l.getIdCategoria() != null) {
+                                        categoriaTexto = String.valueOf(l.getIdCategoria());
+                                        if (categorias != null) {
+                                            for (Categoria c : categorias) {
+                                                if (c.getIdCategoria() == l.getIdCategoria()) {
+                                                    categoriaTexto = c.getIdCategoria() + " - " + c.getNombreCategoria();
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                %>
+                                <%= categoriaTexto %>
                             </td>
-                            <td><%= (l.getIdCategoria() != null) ? l.getIdCategoria() : "" %></td>
                             <% if (esAdmin) { %>
                             <td>
-                                <div class="d-flex gap-2">
-                                    <a class="btn btn-sm btn-outline-primary" href="<%=request.getContextPath()%>/libros?accion=editar&id=<%=l.getIdLibro()%>">
-                                        <i class="bi bi-pencil me-1"></i>Editar
-                                    </a>
+                                <a class="btn btn-sm btn-outline-primary" href="<%=request.getContextPath()%>/libros?accion=editar&id=<%= l.getIdLibro() %>">
+                                    <i class="bi bi-pencil"></i>
+Editar
+                                </a>
 
                                 <form action="<%=request.getContextPath()%>/libros" method="post" class="d-inline">
                                     <input type="hidden" name="accion" value="eliminar">
@@ -199,7 +228,6 @@
                                         <i class="bi bi-trash me-1"></i>Eliminar
                                     </button>
                                 </form>
-                                </div>
                             </td>
                             <% } %>
                         </tr>
