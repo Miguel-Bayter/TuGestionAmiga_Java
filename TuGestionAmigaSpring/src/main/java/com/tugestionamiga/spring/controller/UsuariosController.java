@@ -86,6 +86,28 @@ public class UsuariosController {
                 if (id == null) {
                     throw new IllegalArgumentException("Falta el id del usuario.");
                 }
+
+                if (authentication != null && authentication.getName() != null) {
+                    Optional<Integer> idSesion = usuarioRepository.findIdByCorreo(authentication.getName());
+                    if (idSesion.isPresent() && idSesion.get().equals(id)) {
+                        Usuario usuarioActual = usuarioRepository.findById(id)
+                                .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario a actualizar."));
+
+                        Integer idRolActual = usuarioActual.getIdRol();
+                        Integer idRolFinal = (idRol == null) ? idRolActual : idRol;
+
+                        if (idRolFinal == null || !Integer.valueOf(1).equals(idRolFinal)) {
+                            redirectAttributes.addFlashAttribute(
+                                    "error",
+                                    "No puedes cambiar tu propio rol a USUARIO. Debes mantenerte como ADMIN."
+                            );
+                            return "redirect:/usuarios?accion=editar&id=" + id;
+                        }
+
+                        idRol = idRolFinal;
+                    }
+                }
+
                 Usuario u = new Usuario();
                 u.setIdUsuario(id);
                 u.setNombre(nombre);

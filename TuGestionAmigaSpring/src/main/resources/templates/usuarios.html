@@ -38,6 +38,7 @@
                         <div class="col-12">
                             <label class="form-label">ID Rol (opcional)</label>
                             <input type="number" class="form-control" name="idRol"
+                                   th:disabled="${usuarioEdit != null && idUsuarioSesion != null && usuarioEdit.idUsuario == idUsuarioSesion}"
                                    th:value="${usuarioEdit != null && usuarioEdit.idRol != null ? usuarioEdit.idRol : ''}"/>
                         </div>
 
