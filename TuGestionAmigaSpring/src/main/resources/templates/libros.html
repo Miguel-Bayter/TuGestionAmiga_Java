@@ -43,6 +43,13 @@
                         </div>
 
                         <div class="col-12">
+                            <label class="form-label">Valor del libro</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="valor" required
+                                   th:value="${libroEdit != null && libroEdit.valor != null ? libroEdit.valor : 0}"/>
+                            <div class="form-text">Este valor se usa en compras (valor unitario) y lo define administración.</div>
+                        </div>
+
+                        <div class="col-12">
                             <label class="form-label">Género / Categoría (opcional)</label>
                             <select class="form-select" name="idCategoria">
                                 <option value="" th:selected="${libroEdit == null || libroEdit.idCategoria == null}">-- Sin categoría --</option>
@@ -73,8 +80,22 @@
 
         <div th:class="${esAdmin} ? 'col-xl-8' : 'col-12'">
             <div class="card tga-card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <strong>Listado</strong>
+
+                    <!--
+                        Estos botones se muestran solo en modo USUARIO.
+                        La idea es que, desde el listado de libros, el usuario pueda ir rápido
+                        a registrar un préstamo o una compra.
+                    -->
+                    <div class="btn-group" th:if="${!esAdmin}">
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/prestamos}">
+                            <i class="bi bi-arrow-left-right me-1"></i>Ir a Préstamos
+                        </a>
+                        <a class="btn btn-sm btn-outline-success" th:href="@{/compras}">
+                            <i class="bi bi-cart me-1"></i>Ir a Compras
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive tga-table">
@@ -85,8 +106,10 @@
                                 <th>Título</th>
                                 <th>Autor</th>
                                 <th>Stock</th>
+                                <th th:if="${esAdmin}">Valor</th>
                                 <th>Disponible</th>
                                 <th>Categoría</th>
+                                <th th:if="${!esAdmin}">Acciones</th>
                                 <th th:if="${esAdmin}">Acciones</th>
                             </tr>
                             </thead>
@@ -96,8 +119,19 @@
                                 <td th:text="${l.titulo}"></td>
                                 <td th:text="${l.autor}"></td>
                                 <td th:text="${l.stock}"></td>
+                                <td th:if="${esAdmin}" th:text="${l.valor != null ? l.valor : 0}"></td>
                                 <td th:text="${l.disponible} ? 'Sí' : 'No'"></td>
                                 <td th:text="${l.idCategoria != null ? (l.idCategoria + ' - ' + (l.nombreCategoria != null ? l.nombreCategoria : '')) : '-'}"></td>
+                                <td th:if="${!esAdmin}">
+                                    <div class="btn-group btn-group-sm">
+                                        <a class="btn btn-outline-primary" th:href="@{/prestamos(idLibro=${l.idLibro})}">
+                                            <i class="bi bi-arrow-left-right me-1"></i>Préstamo
+                                        </a>
+                                        <a class="btn btn-outline-success" th:href="@{/compras(idLibro=${l.idLibro})}">
+                                            <i class="bi bi-cart me-1"></i>Compra
+                                        </a>
+                                    </div>
+                                </td>
                                 <td th:if="${esAdmin}">
                                     <a class="btn btn-sm btn-outline-primary"
                                        th:href="@{/libros(accion='editar', id=${l.idLibro})}">

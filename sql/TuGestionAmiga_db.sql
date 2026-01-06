@@ -44,6 +44,7 @@ CREATE TABLE libro (
   autor VARCHAR(100) NOT NULL,
   descripcion TEXT,
   stock INT NOT NULL DEFAULT 0,
+  valor DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   disponibilidad BOOLEAN NOT NULL DEFAULT 0,
   id_categoria INT,
   FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)

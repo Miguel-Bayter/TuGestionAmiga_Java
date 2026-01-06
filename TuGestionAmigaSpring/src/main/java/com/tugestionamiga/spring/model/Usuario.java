@@ -1,5 +1,19 @@
 package com.tugestionamiga.spring.model;
 
+/**
+ * Modelo (POJO) que representa un registro de la tabla {@code usuario}.
+ *
+ * <p>
+ * Este objeto se usa para transportar datos entre repositorios y controladores sin exponer SQL
+ * en la capa web.
+ * </p>
+ *
+ * <p>
+ * El campo {@code correo} es importante porque Spring Security lo utiliza como identificador del
+ * usuario autenticado (username). El campo {@code idRol} se usa para asociar el usuario con la
+ * tabla {@code rol} y definir permisos (ADMIN/USUARIO).
+ * </p>
+ */
 public class Usuario {
 
     private int idUsuario;

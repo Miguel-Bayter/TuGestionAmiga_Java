@@ -3,6 +3,25 @@ package com.tugestionamiga.spring.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Modelo (POJO) que representa una compra registrada en la tabla {@code compra}.
+ *
+ * <p>
+ * Existe para almacenar la información mínima de una compra:
+ * </p>
+ *
+ * <ul>
+ *   <li>Fecha de compra</li>
+ *   <li>Precio</li>
+ *   <li>Relación con usuario ({@code idUsuario})</li>
+ *   <li>Relación con libro ({@code idLibro})</li>
+ * </ul>
+ *
+ * <p>
+ * En el módulo Spring, este modelo se usa para listados y para registrar compras.
+ * La lógica de stock no está aquí, sino en el repositorio transaccional.
+ * </p>
+ */
 public class Compra {
 
     private int idCompra;

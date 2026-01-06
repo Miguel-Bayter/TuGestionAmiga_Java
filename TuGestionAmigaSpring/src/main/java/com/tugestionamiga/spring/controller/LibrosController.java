@@ -3,6 +3,7 @@ package com.tugestionamiga.spring.controller;
 import com.tugestionamiga.spring.model.Libro;
 import com.tugestionamiga.spring.repository.CategoriaRepository;
 import com.tugestionamiga.spring.repository.LibroRepository;
+import java.math.BigDecimal;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,16 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * <p>
  * Nota: en esta versión, la disponibilidad no se edita manualmente; se deriva de {@code stock > 0}.
  * </p>
+ *
+ * <p>
+ * También se maneja el campo {@code valor}:
+ * </p>
+ *
+ * <ul>
+ *   <li>Representa el precio unitario del libro en el catálogo.</li>
+ *   <li>Se define desde administración (CRUD de Libros).</li>
+ *   <li>En el módulo de compras se usa para calcular el total: <code>valor * cantidad</code>.</li>
+ * </ul>
  */
 @Controller
 public class LibrosController {
@@ -35,6 +46,13 @@ public class LibrosController {
         this.categoriaRepository = categoriaRepository;
     }
 
+    /**
+     * Determina si el usuario autenticado tiene rol ADMIN.
+     *
+     * <p>
+     * Existe para que el controller pueda restringir acciones sensibles sin duplicar lógica.
+     * </p>
+     */
     private boolean isAdmin(Authentication authentication) {
         if (authentication == null) {
             return false;
@@ -42,6 +60,13 @@ public class LibrosController {
         return authentication.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
     }
 
+    /**
+     * Renderiza la vista de libros.
+     *
+     * <p>
+     * Siempre carga el listado y las categorías. Si se entra en modo edición, se valida que sea ADMIN.
+     * </p>
+     */
     @GetMapping("/libros")
     public String libros(
             @RequestParam(name = "accion", required = false) String accion,
@@ -69,6 +94,14 @@ public class LibrosController {
         return "libros";
     }
 
+    /**
+     * Procesa acciones del CRUD de libros.
+     *
+     * <p>
+     * Todas las acciones están restringidas a ADMIN porque afectan el catálogo.
+     * La disponibilidad se deriva de stock y no se recibe como input manual.
+     * </p>
+     */
     @PostMapping("/libros")
     public String librosPost(
             @RequestParam(name = "accion", required = false) String accion,
@@ -77,6 +110,7 @@ public class LibrosController {
             @RequestParam(name = "autor", required = false) String autor,
             @RequestParam(name = "descripcion", required = false) String descripcion,
             @RequestParam(name = "stock", required = false) Integer stock,
+            @RequestParam(name = "valor", required = false) String valor,
             @RequestParam(name = "idCategoria", required = false) String idCategoria,
             Authentication authentication,
             RedirectAttributes redirectAttributes
@@ -91,7 +125,7 @@ public class LibrosController {
 
         try {
             if ("crear".equalsIgnoreCase(accionFinal)) {
-                Libro l = buildLibro(id, titulo, autor, descripcion, stock, idCategoria, false);
+                Libro l = buildLibro(id, titulo, autor, descripcion, stock, valor, idCategoria, false);
                 int newId = libroRepository.create(l);
                 redirectAttributes.addFlashAttribute(
                         "mensaje",
@@ -102,7 +136,7 @@ public class LibrosController {
                 if (id == null) {
                     throw new IllegalArgumentException("Falta el id del libro.");
                 }
-                Libro l = buildLibro(id, titulo, autor, descripcion, stock, idCategoria, true);
+                Libro l = buildLibro(id, titulo, autor, descripcion, stock, valor, idCategoria, true);
                 boolean ok = libroRepository.update(l);
                 redirectAttributes.addFlashAttribute("mensaje", ok ? "Libro actualizado." : "No se pudo actualizar el libro.");
 
@@ -121,7 +155,21 @@ public class LibrosController {
         return "redirect:/libros?accion=listar";
     }
 
-    private Libro buildLibro(Integer id, String titulo, String autor, String descripcion, Integer stock, String idCategoriaStr, boolean includeId) {
+    /**
+     * Construye un objeto {@link Libro} a partir de los parámetros del formulario.
+     *
+     * <p>
+     * Existe para centralizar validaciones y normalización:
+     * </p>
+     *
+     * <ul>
+     *   <li>Stock no puede ser negativo (se fuerza a 0).</li>
+     *   <li>Disponible se calcula como {@code stock > 0}.</li>
+     *   <li>Valor no puede ser negativo (se fuerza a 0.00).</li>
+     *   <li>Categoría puede ser nula si no se selecciona.</li>
+     * </ul>
+     */
+    private Libro buildLibro(Integer id, String titulo, String autor, String descripcion, Integer stock, String valorStr, String idCategoriaStr, boolean includeId) {
         Libro l = new Libro();
 
         if (includeId && id != null) {
@@ -135,6 +183,18 @@ public class LibrosController {
         int stockFinal = (stock == null) ? 0 : Math.max(stock, 0);
         l.setStock(stockFinal);
         l.setDisponible(stockFinal > 0);
+
+        // El valor representa el precio unitario del libro en el catálogo.
+        // Se recibe como String porque viene del formulario HTML.
+        if (valorStr == null || valorStr.trim().isEmpty()) {
+            l.setValor(BigDecimal.ZERO);
+        } else {
+            BigDecimal v = new BigDecimal(valorStr.trim());
+            if (v.compareTo(BigDecimal.ZERO) < 0) {
+                v = BigDecimal.ZERO;
+            }
+            l.setValor(v);
+        }
 
         if (idCategoriaStr == null || idCategoriaStr.trim().isEmpty()) {
             l.setIdCategoria(null);

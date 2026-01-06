@@ -33,6 +33,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  *   <li>La fecha de préstamo debe ser la fecha actual.</li>
  *   <li>La fecha de devolución no puede ser anterior a la fecha de préstamo.</li>
  * </ul>
+ *
+ * <p>
+ * Otros puntos del flujo:
+ * </p>
+ *
+ * <ul>
+ *   <li>Se puede prestar una <strong>cantidad</strong> de ejemplares del mismo libro (si hay stock).</li>
+ *   <li>Si llega {@code idLibro} por query param (desde el listado de libros), el selector queda autollenado.</li>
+ * </ul>
  */
 @Controller
 public class PrestamosController {
@@ -47,6 +56,14 @@ public class PrestamosController {
         this.prestamoRepository = prestamoRepository;
     }
 
+    /**
+     * Determina si el usuario autenticado tiene el rol ADMIN.
+     *
+     * <p>
+     * Se utiliza para habilitar funciones administrativas:
+     * ver todos los préstamos, registrar devoluciones y eliminar.
+     * </p>
+     */
     private boolean isAdmin(Authentication authentication) {
         if (authentication == null) {
             return false;
@@ -54,6 +71,13 @@ public class PrestamosController {
         return authentication.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
     }
 
+    /**
+     * Convierte el correo del usuario autenticado en {@code id_usuario}.
+     *
+     * <p>
+     * Esto es necesario porque el login trabaja con correo, pero el préstamo se relaciona por id.
+     * </p>
+     */
     private Integer getIdUsuarioSesion(Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             return null;
@@ -62,10 +86,38 @@ public class PrestamosController {
         return id.orElse(null);
     }
 
+    /**
+     * Renderiza la vista de préstamos.
+     *
+     * <p>
+     * Carga libros para el selector y luego:
+     * </p>
+     *
+     * <ul>
+     *   <li>ADMIN: carga usuarios + listado completo.</li>
+     *   <li>USUARIO: carga solo los préstamos del usuario en sesión.</li>
+     * </ul>
+     *
+     * <p>
+     * Si el usuario entra desde el listado de libros, se puede enviar {@code idLibro} para que el
+     * formulario quede con el libro preseleccionado.
+     * </p>
+     */
     @GetMapping("/prestamos")
-    public String prestamos(Authentication authentication, Model model) {
+    public String prestamos(
+            @RequestParam(name = "idLibro", required = false) Integer idLibro,
+            Authentication authentication,
+            Model model
+    ) {
         boolean esAdmin = isAdmin(authentication);
         model.addAttribute("esAdmin", esAdmin);
+
+        // Se envía la fecha actual a la vista para evitar expresiones Thymeleaf con T(...)
+        // (en algunos entornos eso puede generar error 500 por restricciones de seguridad).
+        model.addAttribute("hoy", LocalDate.now());
+
+        // Se usa para autollenar el selector de libros cuando el usuario viene desde el listado.
+        model.addAttribute("idLibroSeleccionado", idLibro);
 
         model.addAttribute("libros", libroRepository.findAll());
 
@@ -84,6 +136,19 @@ public class PrestamosController {
         return "prestamos";
     }
 
+    /**
+     * Procesa acciones del módulo de préstamos.
+     *
+     * <p>
+     * Incluye:
+     * </p>
+     *
+     * <ul>
+     *   <li>{@code registrarPrestamo}: descuenta stock, guarda préstamo y valida fechas.</li>
+     *   <li>{@code registrarDevolucion}: cambia a DEVUELTO y repone stock (solo ADMIN).</li>
+     *   <li>{@code eliminar}: operación administrativa (solo ADMIN).</li>
+     * </ul>
+     */
     @PostMapping("/prestamos")
     public String prestamosPost(
             @RequestParam(name = "accion", required = false) String accion,
@@ -91,6 +156,7 @@ public class PrestamosController {
             @RequestParam(name = "idLibro", required = false) Integer idLibro,
             @RequestParam(name = "fechaPrestamo", required = false) String fechaPrestamo,
             @RequestParam(name = "fechaDevolucion", required = false) String fechaDevolucion,
+            @RequestParam(name = "cantidad", required = false) Integer cantidad,
             @RequestParam(name = "idPrestamo", required = false) Integer idPrestamo,
             @RequestParam(name = "id", required = false) Integer id,
             Authentication authentication,
@@ -119,23 +185,52 @@ public class PrestamosController {
                     throw new IllegalArgumentException("Debes seleccionar un libro.");
                 }
 
-                LocalDate fPrestamo = LocalDate.parse(fechaPrestamo);
-                LocalDate fDevolucion = LocalDate.parse(fechaDevolucion);
-
-                LocalDate hoy = LocalDate.now();
-                if (!fPrestamo.equals(hoy)) {
-                    throw new IllegalArgumentException("La fecha de préstamo debe ser la fecha actual.");
+                // Validación básica para evitar null y errores de parseo en fechas.
+                if (fechaPrestamo == null || fechaPrestamo.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Debes indicar la fecha de préstamo.");
                 }
+                if (fechaDevolucion == null || fechaDevolucion.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Debes indicar la fecha de devolución.");
+                }
+
+                LocalDate fPrestamo = LocalDate.parse(fechaPrestamo);
+                LocalDate hoy = LocalDate.now();
+                // Regla solicitada: la fecha de préstamo no puede ser inferior ni superior a la fecha actual.
+                // En otras palabras, debe ser exactamente hoy.
+                if (!fPrestamo.equals(hoy)) {
+                    throw new IllegalArgumentException("La fecha de préstamo debe ser la fecha actual (" + hoy + ").");
+                }
+
+                LocalDate fDevolucion = LocalDate.parse(fechaDevolucion);
                 if (fDevolucion.isBefore(fPrestamo)) {
                     throw new IllegalArgumentException("La fecha de devolución no puede ser anterior a la fecha de préstamo.");
                 }
 
-                int newId = prestamoRepository.registrarPrestamo(idUsuarioFinal, idLibro, fPrestamo, fDevolucion);
+                // Cantidad de ejemplares a prestar del mismo libro.
+                // Si no viene del formulario, se asume 1 para mantener compatibilidad.
+                int cantidadFinal = (cantidad == null) ? 1 : cantidad;
+                if (cantidadFinal <= 0) {
+                    throw new IllegalArgumentException("La cantidad a prestar debe ser mayor o igual a 1.");
+                }
+
+                int newId = prestamoRepository.registrarPrestamo(idUsuarioFinal, idLibro, fPrestamo, fDevolucion, cantidadFinal);
 
                 if (newId > 0) {
-                    redirectAttributes.addFlashAttribute("mensaje", "Préstamo registrado con ID: " + newId);
+                    if (cantidadFinal == 1) {
+                        redirectAttributes.addFlashAttribute("mensaje", "Préstamo registrado con ID: " + newId);
+                    } else {
+                        redirectAttributes.addFlashAttribute("mensaje", "Préstamos registrados: " + cantidadFinal + " (último ID: " + newId + ")");
+                    }
                 } else {
-                    redirectAttributes.addFlashAttribute("error", "No se pudo registrar el préstamo. Verifica que el libro exista y esté disponible.");
+                    boolean noHayStock = libroRepository.findById(idLibro)
+                            .map(l -> l.getStock() <= 0)
+                            .orElse(true);
+
+                    if (noHayStock) {
+                        redirectAttributes.addFlashAttribute("error", "No hay libros disponibles");
+                    } else {
+                        redirectAttributes.addFlashAttribute("error", "No se pudo registrar el préstamo.");
+                    }
                 }
 
             } else if ("registrarDevolucion".equalsIgnoreCase(accionFinal)) {

@@ -1,5 +1,12 @@
 package com.tugestionamiga.spring.model;
 
+/**
+ * Modelo (POJO) para la tabla {@code categoria}.
+ *
+ * <p>
+ * Se usa para clasificar libros por género/categoría y poder mostrar un selector amigable en la UI.
+ * </p>
+ */
 public class Categoria {
 
     private int idCategoria;

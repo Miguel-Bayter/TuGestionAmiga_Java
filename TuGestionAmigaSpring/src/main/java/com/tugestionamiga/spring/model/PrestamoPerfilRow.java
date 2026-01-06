@@ -2,6 +2,14 @@ package com.tugestionamiga.spring.model;
 
 import java.time.LocalDate;
 
+/**
+ * DTO para mostrar préstamos en la pantalla de perfil.
+ *
+ * <p>
+ * Similar a {@link Prestamo}, pero añade datos del libro (título/autor) porque el perfil muestra
+ * un listado consolidado sin hacer consultas adicionales.
+ * </p>
+ */
 public class PrestamoPerfilRow {
 
     private int idPrestamo;

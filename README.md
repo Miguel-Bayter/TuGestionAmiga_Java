@@ -471,6 +471,11 @@ Además, se agregaron categorías de ejemplo en los scripts SQL para que el sele
    - Se ejecuta como aplicación stand-alone (servidor embebido).
    - Stack: **Spring Boot + Thymeleaf + Spring JDBC + Spring Security**.
 
+### Qué problema resuelve el módulo Spring
+
+El módulo `TuGestionAmigaSpring` permite ejecutar la aplicación sin un Tomcat externo.
+Además, la estructura queda más parecida a un “framework” (controladores, vistas, seguridad y repositorios) y se mantiene la misma base de datos.
+
 ## 2) Framework usado en el módulo Spring (`TuGestionAmigaSpring`)
 
 El módulo `TuGestionAmigaSpring` se agregó para que la aplicación se pueda ejecutar sin Tomcat externo.
@@ -530,6 +535,33 @@ También puedes usar variables de entorno:
 - `DB_USER`
 - `DB_PASSWORD`
 
+## 5) Esquema de base de datos usado por el módulo Spring
+
+El módulo Spring trabaja sobre la misma base `tugestionamiga_db` y depende de estas columnas en la tabla `libro`:
+
+- `stock` (inventario)
+- `valor` (precio unitario del catálogo)
+
+Si creaste la base desde cero con `sql/TuGestionAmiga_db.sql`, ambas columnas ya deben estar definidas.
+
+Si tu base ya existía antes, aplica estas migraciones:
+
+```sql
+USE tugestionamiga_db;
+
+-- 1) Inventario
+ALTER TABLE libro
+ADD COLUMN stock INT NOT NULL DEFAULT 0;
+
+-- 2) Precio unitario del catálogo
+ALTER TABLE libro
+ADD COLUMN valor DECIMAL(10,2) NOT NULL DEFAULT 0.00;
+
+-- Recalcular disponibilidad por consistencia
+UPDATE libro
+SET disponibilidad = (stock > 0);
+```
+
 ## 5) Mejoras implementadas en el módulo Spring (`TuGestionAmigaSpring`)
 
 En el módulo Spring se agregaron pantallas y flujos para que la experiencia sea equivalente (visual y funcional) al módulo web.
@@ -556,20 +588,31 @@ En el módulo Spring se agregaron pantallas y flujos para que la experiencia sea
   - La disponibilidad se calcula como `stock > 0`.
   - **Nota:** para usar stock en la BD se requiere agregar la columna en MySQL (ver script más abajo).
 
+- **Valor del libro (precio unitario de catálogo)**
+  - Se agregó el campo `valor` en Libros (visible y editable solo para ADMIN).
+  - En Compras el usuario no escribe el precio: se toma el `valor` del libro.
+
 - **Préstamos con transacciones (stock)**
   - Registrar préstamo: valida stock, registra préstamo y descuenta stock.
   - Registrar devolución: marca DEVUELTO y repone stock.
   - Validación de fechas: la **fecha de préstamo debe ser la actual** y la devolución no puede ser anterior.
+  - Cantidad: se permite prestar más de 1 ejemplar del mismo libro (si hay stock).
 
 - **Compras (nuevo apartado)**
   - Registro y listado de compras (`compra`).
   - La compra registra el movimiento y actualiza stock de forma transaccional.
+  - Fecha fija: la compra se registra con la fecha actual.
+  - Precio controlado: el precio se calcula desde el `valor` del libro y el usuario solo decide la cantidad.
+
+- **Autollenado desde Libros (USUARIO)**
+  - En el listado de Libros, cada fila tiene accesos directos a Préstamo/Compra.
+  - Al entrar a `/prestamos?idLibro=...` o `/compras?idLibro=...` el selector queda preseleccionado.
 
 - **Perfil del usuario (nuevo apartado)**
   - Ruta `/perfil` con resumen del usuario en sesión.
   - Tablas con libros **comprados** y **prestados** (incluyendo DEVUELTO) usando `JOIN` a `libro`.
 
-### Script de migración (requerido para stock)
+### Script de migración (requerido para stock/valor)
 
 El esquema original solo trae `disponibilidad`. Para habilitar stock en MySQL:
 
@@ -578,6 +621,9 @@ USE tugestionamiga_db;
 
 ALTER TABLE libro
 ADD COLUMN stock INT NOT NULL DEFAULT 0;
+
+ALTER TABLE libro
+ADD COLUMN valor DECIMAL(10,2) NOT NULL DEFAULT 0.00;
 
 UPDATE libro
 SET disponibilidad = (stock > 0);
@@ -630,11 +676,12 @@ Requisito: haber ejecutado `sql/TuGestionAmiga_db.sql` (ya incluye `categoria`, 
    - Usuario: `admin@mail.com`
    - Clave: `admin123`
 
-2) **Crear un libro con stock**
+2) **Crear un libro con stock y valor**
    - Ir a: `http://localhost:8080/libros`
    - Crear un libro con:
      - Título / Autor (cualquiera)
      - Stock: `3`
+     - Valor: por ejemplo `25.00`
    - Validar en el listado que:
      - `Stock = 3`
      - `Disponible = Sí`
@@ -650,11 +697,12 @@ Requisito: haber ejecutado `sql/TuGestionAmiga_db.sql` (ya incluye `categoria`, 
    - En `Préstamos`, registrar devolución con el ID del préstamo.
    - Validar en `Libros` que el stock subió en 1.
 
-5) **Registrar una compra (consume stock)**
+5) **Registrar una compra (consume stock y usa el valor del catálogo)**
    - Ir a: `http://localhost:8080/compras`
    - Registrar una compra con:
      - Fecha compra: hoy
-     - Precio: por ejemplo `25.00`
+     - Cantidad: por ejemplo `2`
+     - Nota: el precio no se escribe, se toma del valor del libro
    - Validar en `Libros` que el stock bajó en 1.
 
 6) **Ver Perfil**

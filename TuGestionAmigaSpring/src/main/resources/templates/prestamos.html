@@ -33,6 +33,7 @@
                                 <option value="">Seleccione...</option>
                                 <option th:each="l : ${libros}"
                                         th:value="${l.idLibro}"
+                                        th:selected="${idLibroSeleccionado != null && idLibroSeleccionado == l.idLibro}"
                                         th:text="${l.idLibro + ' - ' + l.titulo + ' (' + (l.disponible ? 'Disponible' : 'No disponible') + ')'}">
                                 </option>
                             </select>
@@ -41,13 +42,18 @@
                         <div class="col-md-6">
                             <label class="form-label">Fecha préstamo</label>
                             <input type="date" class="form-control" name="fechaPrestamo" required
-                                   th:attr="min=${T(java.time.LocalDate).now()},max=${T(java.time.LocalDate).now()}"/>
+                                   th:attr="min=${hoy},max=${hoy}"
+                                   th:value="${hoy}"/>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Fecha devolución</label>
-                            <input type="date" class="form-control" name="fechaDevolucion" required
-                                   th:attr="min=${T(java.time.LocalDate).now()}"/>
+                            <input type="date" class="form-control" name="fechaDevolucion" required/>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Cantidad de libros a prestar</label>
+                            <input type="number" min="1" class="form-control" name="cantidad" value="1" required/>
                         </div>
 
                         <div class="col-12 d-grid">

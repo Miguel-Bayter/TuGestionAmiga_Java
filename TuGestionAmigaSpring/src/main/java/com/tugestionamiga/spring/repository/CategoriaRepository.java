@@ -5,6 +5,14 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repositorio JDBC para la tabla {@code categoria}.
+ *
+ * <p>
+ * Existe para obtener el catálogo de categorías (géneros) y usarlo en formularios de libros.
+ * Esto permite mostrar un selector con nombres (en lugar de pedir el id a mano).
+ * </p>
+ */
 @Repository
 public class CategoriaRepository {
 
@@ -14,6 +22,9 @@ public class CategoriaRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * Lista todas las categorías ordenadas por id.
+     */
     public List<Categoria> findAll() {
         return jdbcTemplate.query(
                 "SELECT id_categoria, nombre_categoria FROM categoria ORDER BY id_categoria",

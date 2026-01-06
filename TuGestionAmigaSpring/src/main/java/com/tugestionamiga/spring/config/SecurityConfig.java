@@ -3,11 +3,13 @@ package com.tugestionamiga.spring.config;
 import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 /**
  * Configuración de seguridad del módulo Spring Boot.
@@ -26,12 +28,18 @@ import org.springframework.security.web.SecurityFilterChain;
  * Para facilitar la prueba rápida con el esquema actual, la contraseña se trata como texto plano
  * usando el prefijo {@code {noop}} (sin hashing). Más adelante se puede reemplazar por BCrypt.
  * </p>
+ *
+ * <p>
+ * Además, se incluye un filtro ({@link RefreshAuthoritiesFilter}) para refrescar roles desde la BD.
+ * Esto existe porque en un módulo de administración es común cambiar el rol de un usuario mientras
+ * este tiene sesión activa, y se busca que el cambio se refleje sin obligar a cerrar sesión.
+ * </p>
  */
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JdbcTemplate jdbcTemplate) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
@@ -44,6 +52,8 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(Customizer.withDefaults());
+
+        http.addFilterAfter(new RefreshAuthoritiesFilter(jdbcTemplate), SecurityContextHolderFilter.class);
 
         return http.build();
     }

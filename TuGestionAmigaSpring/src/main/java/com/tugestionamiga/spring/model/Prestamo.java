@@ -2,6 +2,25 @@ package com.tugestionamiga.spring.model;
 
 import java.time.LocalDate;
 
+/**
+ * Modelo (POJO) que representa un préstamo en la tabla {@code prestamo}.
+ *
+ * <p>
+ * Un préstamo registra el movimiento de un libro hacia un usuario, con:
+ * </p>
+ *
+ * <ul>
+ *   <li>Fecha de préstamo</li>
+ *   <li>Fecha de devolución (compromiso/fecha objetivo)</li>
+ *   <li>Estado: normalmente {@code ACTIVO} o {@code DEVUELTO}</li>
+ *   <li>Relación a usuario y libro</li>
+ * </ul>
+ *
+ * <p>
+ * El estado permite distinguir préstamos actuales de los ya devueltos.
+ * La actualización de stock al prestar/devolver se maneja en el repositorio.
+ * </p>
+ */
 public class Prestamo {
 
     private int idPrestamo;

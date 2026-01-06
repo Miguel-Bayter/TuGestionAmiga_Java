@@ -1,5 +1,7 @@
 package com.tugestionamiga.spring.model;
 
+ import java.math.BigDecimal;
+
 /**
  * Modelo (POJO) que representa un registro de la tabla {@code libro}.
  *
@@ -20,6 +22,19 @@ public class Libro {
     private String descripcion;
     private boolean disponible;
     private int stock;
+
+    /**
+     * Valor (precio unitario) del libro.
+     *
+     * <p>
+     * Se usa principalmente en el módulo de compras para calcular el total:
+     * </p>
+     *
+     * <pre>
+     * total = valor * cantidad
+     * </pre>
+     */
+    private BigDecimal valor;
     private Integer idCategoria;
     private String nombreCategoria;
 
@@ -69,6 +84,14 @@ public class Libro {
 
     public void setStock(int stock) {
         this.stock = stock;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 
     public Integer getIdCategoria() {

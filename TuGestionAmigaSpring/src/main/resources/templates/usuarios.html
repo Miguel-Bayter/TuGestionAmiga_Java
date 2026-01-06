@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org"
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
       th:replace="~{fragments/app :: appPage('usuarios', 'Usuarios', 'CRUD de la tabla usuario', ~{::content})}">
 <div th:fragment="content">
     <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
@@ -36,10 +36,18 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">ID Rol (opcional)</label>
-                            <input type="number" class="form-control" name="idRol"
-                                   th:disabled="${usuarioEdit != null && idUsuarioSesion != null && usuarioEdit.idUsuario == idUsuarioSesion}"
-                                   th:value="${usuarioEdit != null && usuarioEdit.idRol != null ? usuarioEdit.idRol : ''}"/>
+                            <label class="form-label">Cambio de credenciales</label>
+                            <select class="form-select" name="idRol" required
+                                    th:disabled="${usuarioEdit != null && idUsuarioSesion != null && usuarioEdit.idUsuario == idUsuarioSesion}">
+                                <option value="1"
+                                        th:selected="${(usuarioEdit != null && usuarioEdit.idRol != null ? usuarioEdit.idRol : 2) == 1}">
+                                    Administrador
+                                </option>
+                                <option value="2"
+                                        th:selected="${(usuarioEdit != null && usuarioEdit.idRol != null ? usuarioEdit.idRol : 2) == 2}">
+                                    Usuario
+                                </option>
+                            </select>
                         </div>
 
                         <div class="col-12 d-grid">
@@ -95,7 +103,8 @@
                                             <i class="bi bi-shield-lock me-1"></i>Eliminar
                                         </button>
 
-                                        <form th:if="${idUsuarioSesion == null || idUsuarioSesion != u.idUsuario}"
+                                        <form sec:authorize="hasRole('ADMIN')"
+                                              th:if="${idUsuarioSesion == null || idUsuarioSesion != u.idUsuario}"
                                               th:action="@{/usuarios}" method="post" class="d-inline">
                                             <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                             <input type="hidden" name="accion" value="eliminar"/>
